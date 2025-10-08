@@ -1,0 +1,11 @@
+
+:root{
+  --inss-blue: #0B62B8;
+  --inss-green: #1E9B3A;
+  --inss-yellow: #FFCC00;
+}
+body { background: #f8fafc; }
+.navbar-brand .fw-bold { color: var(--inss-blue); }
+.btn-primary { background-color: var(--inss-blue); border-color: var(--inss-blue); }
+.btn-success { background-color: var(--inss-green); border-color: var(--inss-green); }
+.table thead { background: linear-gradient(90deg, var(--inss-blue), var(--inss-green)); color: white; }

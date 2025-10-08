@@ -1,0 +1,28 @@
+
+{% extends 'stock/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>Materiais</h1>
+  <a class="btn btn-success" href="{% url 'materials_add' %}">Adicionar material</a>
+</div>
+<table class="table table-striped bg-white shadow-sm">
+  <thead class="table-light"><tr><th>Nome</th><th>Quantidade</th><th>Min</th><th>Ações</th></tr></thead>
+  <tbody>
+  {% for m in materiais %}
+  <tr>
+    <td>{{ m.nome }}</td>
+    <td>{{ m.quantidade }}</td>
+    <td>{{ m.minimo }}</td>
+    <td>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'materials_edit' m.pk %}">Editar</a>
+      {% if user.is_staff %}
+      <form action="{% url 'materials_delete' m.pk %}" method="post" style="display:inline">{% csrf_token %}
+        <button class="btn btn-sm btn-outline-danger" type="submit">Excluir</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,10 @@
+
+{% extends 'stock/base.html' %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h3>Registrar Movimento</h3>
+    <form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary" type="submit">Registrar</button></form>
+  </div>
+</div>
+{% endblock %}
