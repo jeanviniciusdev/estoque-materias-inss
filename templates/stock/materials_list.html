@@ -3,7 +3,11 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1>Materiais</h1>
-  <a class="btn btn-success" href="{% url 'materials_add' %}">Adicionar material</a>
+  <div>
+    <a class="btn btn-success" href="{% url 'materials_add' %}">Adicionar material</a>
+    <a class="btn btn-outline-secondary" href="{% url 'export_materials_csv' %}">Exportar materiais (CSV)</a>
+    <a class="btn btn-outline-secondary" href="{% url 'export_movements_csv' %}">Exportar movimentos (CSV)</a>
+  </div>
 </div>
 <table class="table table-striped bg-white shadow-sm">
   <thead class="table-light"><tr><th>Nome</th><th>Quantidade</th><th>Min</th><th>Ações</th></tr></thead>
