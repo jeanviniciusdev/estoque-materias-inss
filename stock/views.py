@@ -12,6 +12,7 @@ import csv
 from django.utils.dateparse import parse_datetime, parse_date
 from .models import Movimento
 from io import BytesIO
+from django.db.models import F
 
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
@@ -19,7 +20,20 @@ class CustomLoginView(LoginView):
 @login_required
 def dashboard(request):
     materiais = Material.objects.all()
-    return render(request, 'stock/dashboard.html', {'materiais': materiais})
+    
+    # Buscar materiais abaixo do mínimo
+    materiais_em_alerta = Material.objects.filter(quantidade__lt=F('minimo')).order_by('quantidade')[:3]
+
+    # Buscar notificações do usuário
+    user_notifs_unread = request.user.notifications.filter(read=False).order_by('-created')[:10]
+
+    context = {
+        'materiais': materiais,
+        'materiais_em_alerta': materiais_em_alerta,
+        'user_notifs_unread': user_notifs_unread,
+    }
+    return render(request, 'stock/dashboard.html', context)
+
 
 @login_required
 def material_list(request):
