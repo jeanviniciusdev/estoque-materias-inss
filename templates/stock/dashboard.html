@@ -1,46 +1,108 @@
-
 {% extends 'stock/base.html' %}
 {% block content %}
-<div class="row">
+<div class="row g-3">
+  <!-- Gráfico 1: Estoque por Material -->
   <div class="col-md-8">
     <div class="card shadow-sm mb-3">
-      <div class="card-body" style="height:350px;">
-        <h4>Estoque por material</h4>
-        <canvas id="estoqueChart" style="height:20px;"></canvas>
+      <div class="card-body" style="height:350px; padding-bottom:40px;">
+        <h4 class="fw-bold mb-3 text-light">📦Estoque por material</h4>
+        <div style="position: relative; height:100%; width:100%;">
+          <canvas id="estoqueChart"></canvas>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Atalhos -->
   <div class="col-md-4">
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mb-3">
       <div class="card-body">
-        <h5>Atalhos</h5>
-        <a class="btn btn-sm btn-success mb-2" href="{% url 'materials_add' %}">Adicionar material</a>
-        <a class="btn btn-sm btn-primary mb-2" href="{% url 'movimento_add' %}">Registrar movimento</a>
-       <a class="btn btn-sm btn-danger mb-2" href="{% url 'materials_list' %}">Editar</a>
+        <h5 class="fw-bold mb-3 text-light">Atalhos</h5>
+        <a class="btn btn-success w-100 mb-2" href="{% url 'materials_add' %}">Adicionar material</a>
+        <a class="btn btn-primary w-100 mb-2" href="{% url 'movimento_add' %}">Registrar movimento</a>
+        <a class="btn btn-danger w-100 mb-2" href="{% url 'materials_list' %}">Editar materiais</a>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Gráfico 2: Comparativo de Estoques -->
+<div class="card shadow-sm mb-3">
+  <div class="card-body" style="height:350px; padding-bottom:40px;">
+    <h4 class="fw-bold mb-3 text-light">📈​Comparativo de Estoques</h4>
+    <div style="position: relative; height:100%; width:100%;">
+      <canvas id="comparativoChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-async function loadData(){
+async function loadData() {
   const resp = await fetch('{% url "api_materials" %}');
   const data = await resp.json();
-  const labels = data.map(d=>d.nome);
-  const values = data.map(d=>d.quantidade);
-  const ctx = document.getElementById('estoqueChart').getContext('2d');
-  new Chart(ctx, {
+
+  const labels = data.map(d => d.nome);
+  const values = data.map(d => d.quantidade);
+
+  // === GRÁFICO 1: Estoque por Material ===
+  const ctx1 = document.getElementById('estoqueChart').getContext('2d');
+  new Chart(ctx1, {
     type: 'bar',
     data: {
       labels: labels,
       datasets: [{
         label: 'Quantidade',
         data: values,
-        backgroundColor: labels.map(()=> 'rgba(3, 78, 162, 0.8)'),
+        backgroundColor: '#1C64AE',
+        borderRadius: 6
       }]
     },
-    options: {responsive:true, maintainAspectRatio:false}
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+        padding: { bottom: 20 }
+      },
+      scales: {
+        x: { ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+        y: { beginAtZero: true, ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+      },
+      plugins: {
+        legend: { position: 'top', labels: { color: '#FFFFFF' } }
+      }
+    }
+  });
+
+  // === GRÁFICO 2: Comparativo Vertical ===
+  const ctx2 = document.getElementById('comparativoChart').getContext('2d');
+  new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Estoque Atual', data: values, backgroundColor: '#1C64AE', borderRadius: 6 },
+        { label: 'Meta Ideal', data: values.map(v => v * 1.5), backgroundColor: '#004080', borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { bottom: 20 } },
+      scales: {
+        x: { ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+        y: { beginAtZero: true, ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+      },
+      plugins: {
+        legend: { position: 'top', labels: { color: '#FFFFFF' } },
+        tooltip: { enabled: true, backgroundColor: '#001D40', titleColor: '#FFFFFF', bodyColor: '#FFFFFF' }
+      }
+    }
   });
 }
+
 loadData();
 </script>
 {% endblock %}
