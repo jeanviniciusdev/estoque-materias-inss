@@ -83,9 +83,18 @@ def movimento_create(request):
 
 @api_view(['GET'])
 def api_materials(request):
-    qs = Material.objects.all()
-    serializer = MaterialSerializer(qs, many=True)
-    return JsonResponse(serializer.data, safe=False)
+    materiais = Material.objects.all().order_by('nome')
+    data = [
+        {
+            'id': m.id,
+            'nome': m.nome,
+            'quantidade': m.quantidade,
+            'minimo': m.minimo  # ✅ incluído para o gráfico 2
+        }
+        for m in materiais
+    ]
+    return JsonResponse(data, safe=False)
+
 
 @login_required
 def export_materials_csv(request):
