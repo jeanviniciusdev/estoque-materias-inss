@@ -13,4 +13,6 @@ urlpatterns = [
     path('login/', views.CustomLoginView.as_view(), name='login'),
     path('reports/materials/csv/', views.export_materials_csv, name='export_materials_csv'),
     path('reports/movements/csv/', views.export_movements_csv, name='export_movements_csv'),
+    path('alertas/', views.alertas_completos, name='alertas_completos'),
+    path('export_alertas_csv/', views.export_alertas_csv, name='export_alertas_csv'),
 ]

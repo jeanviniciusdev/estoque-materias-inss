@@ -1,11 +1,13 @@
 {% extends 'stock/base.html' %}
 {% block content %}
+
 <div class="row g-3">
+
   <!-- Gráfico 1: Estoque por Material -->
   <div class="col-md-8">
     <div class="card shadow-sm mb-3">
       <div class="card-body" style="height:350px; padding-bottom:40px;">
-        <h4 class="fw-bold mb-3 text-light">📦Estoque por material</h4>
+        <h4 class="fw-bold mb-3 text-light">📦 Estoque por material</h4>
         <div style="position: relative; height:100%; width:100%;">
           <canvas id="estoqueChart"></canvas>
         </div>
@@ -13,25 +15,47 @@
     </div>
   </div>
 
-  <!-- Atalhos -->
+  <!-- Coluna lateral com Atalhos + Alertas -->
   <div class="col-md-4">
+    <!-- Atalhos -->
     <div class="card shadow-sm mb-3">
       <div class="card-body">
-        <h5 class="fw-bold mb-3 text-light">↗️️Atalhos</h5>
+        <h5 class="fw-bold mb-3 text-light">↗️️ Atalhos</h5>
         <a class="btn btn-success w-100 mb-2" href="{% url 'materials_add' %}">Adicionar material</a>
         <a class="btn btn-primary w-100 mb-2" href="{% url 'movimento_add' %}">Registrar movimento</a>
         <a class="btn btn-danger w-100 mb-2" href="{% url 'materials_list' %}">Editar materiais</a>
       </div>
     </div>
+
+<!-- Alertas -->
+<div class="card shadow-sm" style="max-height:350px; overflow-y:auto;">
+  <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+    <strong>⚠️ Materiais abaixo do mínimo</strong>
+    <a href="{% url 'alertas_completos' %}" class="btn btn-sm btn-outline-dark">Ver todos</a>
+  </div>
+  <ul class="list-group list-group-flush">
+    {% if materiais_em_alerta %}
+      {% for mat in materiais_em_alerta|slice:":2" %}  {# Mostra apenas os 2 primeiros #}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ mat.nome }}
+        <span class="badge bg-danger rounded-pill">{{ mat.quantidade }}/{{ mat.minimo }}</span>
+      </li>
+      {% endfor %}
+    {% else %}
+      <li class="list-group-item text-center text-muted">
+        Nenhum material abaixo do mínimo.
+      </li>
+    {% endif %}
+  </ul>
+</div>
+
   </div>
 </div>
 
-  
-
 <!-- Gráfico 2: Comparativo de Estoques -->
-<div class="card shadow-sm mb-3">
+<div class="card shadow-sm mb-3 mt-3">
   <div class="card-body" style="height:350px; padding-bottom:40px;">
-    <h4 class="fw-bold mb-3 text-light">📈​Comparativo de Estoques</h4>
+    <h4 class="fw-bold mb-3 text-light">📈 Comparativo de Estoques</h4>
     <div style="position: relative; height:100%; width:100%;">
       <canvas id="comparativoChart"></canvas>
     </div>
@@ -65,74 +89,58 @@ async function loadData() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: {
-        padding: { bottom: 20 }
+      layout: { padding: { bottom: 20 } },
+      scales: {
+        x: { ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+        y: { beginAtZero: true, ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } }
       },
+      plugins: { legend: { position: 'top', labels: { color: '#FFFFFF' } } }
+    }
+  });
+
+  // === GRÁFICO 2: Comparativo Vertical ===
+  const ctx2 = document.getElementById('comparativoChart').getContext('2d');
+  new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Mínimo',
+          data: data.map(d => d.minimo),
+          backgroundColor: '#C0392B',
+          borderRadius: 6
+        },
+        {
+          label: 'Estoque Atual',
+          data: values,
+          backgroundColor: '#1C64AE',
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { bottom: 20 } },
       scales: {
         x: { ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } },
         y: { beginAtZero: true, ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } }
       },
       plugins: {
-        legend: { position: 'top', labels: { color: '#FFFFFF' } }
+        legend: { position: 'top', labels: { color: '#FFFFFF' } },
+        tooltip: {
+          enabled: true,
+          backgroundColor: '#001D40',
+          titleColor: '#FFFFFF',
+          bodyColor: '#FFFFFF'
+        }
       }
     }
   });
-
-// === GRÁFICO 2: Comparativo Vertical ===
-const ctx2 = document.getElementById('comparativoChart').getContext('2d');
-new Chart(ctx2, {
-  type: 'bar',
-  data: {
-    labels: labels,
-    datasets: [
-      {
-        label: 'Mínimo',
-        data: data.map(d => d.minimo), // novo campo vindo da API
-        backgroundColor: '#C0392B',
-        borderRadius: 6
-      },
-      {
-        label: 'Estoque Atual',
-        data: values, // quantidade atual
-        backgroundColor: '#1C64AE',
-        borderRadius: 6
-      }
-      
-    ]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    layout: {
-      padding: { bottom: 20 }
-    },
-    scales: {
-      x: {
-        ticks: { color: '#FFFFFF' },
-        grid: { color: 'rgba(255,255,255,0.1)' }
-      },
-      y: {
-        beginAtZero: true,
-        ticks: { color: '#FFFFFF' },
-        grid: { color: 'rgba(255,255,255,0.1)' }
-      }
-    },
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: { color: '#FFFFFF' }
-      },
-      tooltip: {
-        enabled: true,
-        backgroundColor: '#001D40',
-        titleColor: '#FFFFFF',
-        bodyColor: '#FFFFFF'
-      }
-    }
-  }
-});
 }
 
 loadData();
 </script>
+
 {% endblock %}
