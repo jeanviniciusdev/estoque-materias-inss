@@ -1,17 +1,68 @@
-
 {% extends 'stock/base.html' %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h4 class="card-title mb-3">Entrar</h4>
-        <form method="post">{% csrf_token %}
-          {{ form.as_p }}
-          <button class="btn btn-primary" type="submit">Entrar</button>
-        </form>
-      </div>
-    </div>
+<style>
+  /* Centraliza o card de login dentro da área principal, respeitando o menu */
+  .login-container {
+    min-height: calc(100vh - 100px); /* ajusta para ocupar a tela toda */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .login-card {
+    background-color: #001D40;
+    color: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    padding: 2rem;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    animation: fadeIn 0.8s ease-in-out;
+  }
+
+  .login-card h4 {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+
+  .login-card input {
+    background-color: #173a6a;
+    border: 1px solid #2f4c7b;
+    color: #fff;
+  }
+
+  .login-card input:focus {
+    background-color: #1e4c8f;
+    border-color: #4e8ef7;
+  }
+
+  .login-card button {
+    width: 100%;
+    background-color: #1C64AE;
+    border: none;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+
+  .login-card button:hover {
+    background-color: #154f8a;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="login-container">
+  <div class="login-card">
+    <h4>🔒 Login no Sistema</h4>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-primary mt-3" type="submit">Entrar</button>
+    </form>
   </div>
 </div>
 {% endblock %}
