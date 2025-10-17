@@ -1,10 +1,92 @@
-
 {% extends 'stock/base.html' %}
 {% block content %}
-<div class="card shadow-sm">
-  <div class="card-body">
-    <h3>📝​Formulário</h3>
-    <form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary" type="submit">Salvar</button></form>
+<style>
+  /* Centraliza o card do formulário */
+  .form-container {
+    min-height: calc(100vh - 100px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+  }
+
+  .form-card {
+    background-color: #001D40;
+    color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+    padding: 1rem 1.25rem;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+    animation: fadeIn 0.6s ease-in-out;
+  }
+
+  .form-card h4 {
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    font-size: 1.2rem;
+  }
+
+  /* Estilo dos inputs */
+  .form-card input, 
+  .form-card select, 
+  .form-card textarea {
+    background-color: #fff; /* fundo branco */
+    color: #000; /* letra preta */
+    border: 1px solid #2f4c7b;
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+    width: 100%;
+    margin-bottom: 0.6rem;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+  }
+
+  /* Reduz a altura do textarea (campo descrição) */
+  .form-card textarea {
+    height: 6.0rem; /* metade da altura padrão */
+    resize: vertical; /* permite redimensionar verticalmente se quiser */
+  }
+
+  .form-card input:focus, 
+  .form-card select:focus, 
+  .form-card textarea:focus {
+    border-color: #1C64AE;
+    outline: none;
+  }
+
+  /* Botão de envio verde com letra branca */
+  .form-card button {
+    width: 100%;
+    background-color: #28a745; /* verde */
+    color: #fff; /* letra branca */
+    border: none;
+    font-weight: 600;
+    padding: 0.45rem;
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+
+  .form-card button:hover {
+    background-color: #218838; /* verde escuro ao passar o mouse */
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="form-container">
+  <div class="form-card">
+    <h4>📝 Cadastro de Material</h4>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Salvar</button>
+    </form>
   </div>
 </div>
 {% endblock %}
