@@ -29,10 +29,13 @@
           <td>
             <a class="btn btn-sm btn-primary me-2" href="{% url 'materials_edit' m.pk %}">Editar</a>
             {% if user.is_staff %}
-            <form action="{% url 'materials_delete' m.pk %}" method="post" style="display:inline;">
-              {% csrf_token %}
-              <button class="btn btn-sm btn-danger" type="submit">Excluir</button>
-            </form>
+            <button
+              type="button"
+              class="btn btn-sm btn-danger btn-open-delete"
+              data-id="{{ m.id }}"
+              data-name="{{ m.nome }}"
+              data-url-template="{% url 'materials_delete' 0 %}"
+            >Excluir</button>
             {% endif %}
           </td>
         </tr>
@@ -45,6 +48,68 @@
     </table>
   </div>
 </div>
+
+<!-- Modal de confirmação -->
+<div class="modal" id="deleteModal" tabindex="-1" role="dialog" aria-hidden="true" style="display:none;">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form id="deleteForm" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalTitle">Confirmar exclusão</h5>
+          <button type="button" class="close btn-close-modal" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p id="deleteModalBody">Tem certeza que deseja excluir este material?</p>
+          <div>
+            <label for="id_motivo">Motivo (opcional)</label><br>
+            <textarea id="id_motivo" name="motivo" rows="4" cols="50" placeholder="Descreva um motivo..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-close-modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Confirmar exclusão</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const modal = document.getElementById('deleteModal');
+  const form = document.getElementById('deleteForm');
+  const title = document.getElementById('deleteModalTitle');
+  const body = document.getElementById('deleteModalBody');
+  const closeButtons = document.querySelectorAll('.btn-close-modal');
+
+  function showModal() { modal.style.display = 'block'; }
+  function hideModal() { modal.style.display = 'none'; }
+
+  document.querySelectorAll('.btn-open-delete').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      const id = this.dataset.id;
+      const name = this.dataset.name;
+      const urlTemplate = this.dataset.urlTemplate; // e.g. "/materials/0/delete/"
+      // monta action substituindo o 0 pela id real
+      const action = urlTemplate.replace('/0/', '/' + id + '/');
+      form.action = action;
+      title.textContent = 'Excluir material: ' + name;
+      body.textContent = 'Tem certeza que deseja excluir "' + name + '"?';
+      // limpa motivo
+      form.querySelector('textarea[name="motivo"]').value = '';
+      showModal();
+    });
+  });
+
+  closeButtons.forEach(function(b){ b.addEventListener('click', hideModal); });
+
+  // fecha modal se clicar fora do conteúdo
+  modal.addEventListener('click', function(e){
+    if (e.target === modal) hideModal();
+  });
+});
+</script>
 
 <style>
   /* === Estilo da tabela === */

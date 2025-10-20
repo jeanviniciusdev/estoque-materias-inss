@@ -1,3 +1,4 @@
+import re
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
@@ -9,6 +10,8 @@ from .serializers import MaterialSerializer
 from rest_framework.decorators import api_view
 from django.utils.dateparse import parse_date
 import csv
+from django.contrib import messages
+from django.urls import reverse
 
 
 class CustomLoginView(LoginView):
@@ -76,7 +79,22 @@ def material_edit(request, pk):
 def material_delete(request, pk):
     mat = get_object_or_404(Material, pk=pk)
     if request.method == 'POST':
+        motivo = (request.POST.get('motivo') or '').strip()
+        if motivo:
+            nota = f"nome={mat.nome}; motivo={motivo}"
+        else:
+            nota = f"nome={mat.nome}"
+        mv = Movimento(
+            material=mat,
+            tipo='DELETE',
+            quantidade=mat.quantidade or 0,
+            nota=nota
+        )
+        if request.user.is_authenticated:
+            mv.usuario = request.user
+        mv.save(adjust_material=False)
         mat.delete()
+        messages.success(request, f'Material "{mat.nome}" excluído.')
         return redirect('materials_list')
     return render(request, 'stock/material_confirm_delete.html', {'material': mat})
 
@@ -152,28 +170,46 @@ def export_movements_csv(request):
     response.write('\ufeff')
 
     writer = csv.writer(response, lineterminator='\r\n')
-    writer.writerow(['id', 'data', 'usuario', 'material_id', 'material_nome', 'tipo', 'quantidade', 'nota'])
+    # material_id removido do cabeçalho
+    writer.writerow(['id', 'data', 'usuario', 'material_nome', 'tipo', 'quantidade', 'nota'])
 
     for mv in qs:
         usuario = mv.usuario.username if getattr(mv, 'usuario', None) else ''
         data_str = mv.criado.strftime('%d/%m/%Y') if getattr(mv, 'criado', None) else ''
+
+        if mv.material is not None:
+            material_nome = mv.material.nome
+            nota_csv = mv.nota or ''
+        else:
+            material_nome = ''
+            nota_csv = ''
+            if mv.nota:
+                # tenta extrair motivo da nota estruturada "nome=...; motivo=..."
+                m_motivo = re.search(r'motivo=([^;]+)', mv.nota)
+                if m_motivo:
+                    nota_csv = m_motivo.group(1).strip()
+                else:
+                    # se não encontrar motivo, usa a nota inteira
+                    nota_csv = mv.nota
+
         writer.writerow([
             mv.id,
             data_str,
             usuario,
-            mv.material.id,
-            mv.material.nome,
+            material_nome,
             mv.tipo,
             mv.quantidade,
-            mv.nota
+            nota_csv
         ])
 
     return response
+
 
 @login_required
 def alertas_completos(request):
     alertas = Material.objects.filter(quantidade__lt=models.F('minimo')).order_by('nome')
     return render(request, 'stock/alertas_completos.html', {'alertas': alertas})
+
 
 @login_required
 def export_alertas_csv(request):
