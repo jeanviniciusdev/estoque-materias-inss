@@ -1,11 +1,18 @@
-
-{% extends 'stock/base.html' %}
+{% extends "base.html" %}
 {% block content %}
-<div class="card shadow-sm">
-  <div class="card-body">
-    <h3>Confirmar exclusão</h3>
-    <p>Deseja excluir {{ material.nome }}?</p>
-    <form method="post">{% csrf_token %}<button class="btn btn-danger" type="submit">Sim, excluir</button></form>
-  </div>
-</div>
+  <h2>Excluir material: {{ material.nome }}</h2>
+  <p>Tem certeza que deseja excluir este material?</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div>
+      <label for="id_motivo">Motivo (opcional)</label><br>
+      <textarea id="id_motivo" name="motivo" rows="4" cols="60" placeholder="Descreva um motivo..."></textarea>
+    </div>
+
+    <p style="margin-top:1em;">
+      <a href="{% url 'materials_list' %}" class="btn">Cancelar</a>
+      <button type="submit" class="btn btn-danger">Confirmar exclusão</button>
+    </p>
+  </form>
 {% endblock %}
