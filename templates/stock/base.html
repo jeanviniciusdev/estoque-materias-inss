@@ -15,63 +15,109 @@
 
   <!-- Custom CSS -->
   <style>
+    :root {
+      --bg-color: #01132E;
+      --navbar-color: #001D40;
+      --card-color: #001D40;
+      --text-color: #ffffff;
+      --btn-primary: #1C64AE;
+      --btn-outline: #1C64AE;
+    }
+
     body {
-      background-color: #01132E !important;
-      color: #ffffff;
+      background-color: var(--bg-color) !important;
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
     .navbar {
-      background-color: #001D40 !important;
-    }
-
-    .container {
-      background-color: transparent !important;
+      background-color: var(--navbar-color) !important;
+      transition: background-color 0.3s;
     }
 
     .card {
-      background-color: #001D40 !important;
-      color: #ffffff;
+      background-color: var(--card-color) !important;
+      color: var(--text-color);
       border: none;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.3s, color 0.3s;
     }
 
     .btn-primary {
-      background-color: #1C64AE !important;
+      background-color: var(--btn-primary) !important;
       border: none;
     }
 
     .btn-outline-secondary {
-      color: #fff !important;
-      border-color: #1C64AE !important;
+      color: var(--text-color) !important;
+      border-color: var(--btn-outline) !important;
     }
 
     .btn-outline-secondary:hover {
-      background-color: #1C64AE !important;
+      background-color: var(--btn-outline) !important;
     }
 
-    /* Novas regras para legibilidade do modal de exclusão */
-    .modal .modal-header {
-      background-color: #dc3545 !important; /* fundo vermelho */
-      color: #fff !important;
+    body[data-theme="azul"] {
+      --bg-color: #082757;
+      --navbar-color: #0C2F6B;
+      --card-color: #133E87;
+      --text-color: #ffffff;
+      --btn-primary: #2E6CCB;
+      --btn-outline: #2E6CCB;
     }
-    .modal .modal-header .modal-title,
-    .modal .modal-header .btn-close {
-      color: #fff !important;
+
+    body[data-theme="claro"] {
+      --bg-color: #f0f4f8;
+      --navbar-color: #ffffff;
+      --card-color: #ffffff;
+      --text-color: #000000;
+      --btn-primary: #1C64AE;
+      --btn-outline: #1C64AE;
     }
-    .modal .modal-content {
-      background-color: #001D40 !important; /* mantém tema escuro */
-      color: #fff !important;
+
+    .theme-selector {
+      background: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--btn-outline);
+      border-radius: 8px;
+      padding: 4px 8px;
     }
-    .modal .modal-body {
-      color: #fff !important;
+
+    .theme-selector option {
+      color: #000;
     }
-    .modal .modal-footer {
-      background-color: transparent !important;
+
+    /* ===== Rodapé ===== */
+    footer {
+      background-color: var(--navbar-color);
+      color: var(--text-color);
+      margin-top: auto;
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    footer .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      text-align: center;
+    }
+
+    footer img {
+      height: 38px;
+    }
+
+    footer span {
+      flex: 1;
+      text-align: center;
     }
   </style>
-
-  <link rel="stylesheet" href="{% static 'css/custom.css' %}">
 </head>
 
 <body>
@@ -84,6 +130,12 @@
       </a>
 
       <div class="d-flex align-items-center">
+        <select id="themeSelect" class="theme-selector me-3">
+          <option value="escuro">🌙 Escuro</option>
+          <option value="azul">🟦 Azul</option>
+          <option value="claro">☀️ Claro</option>
+        </select>
+
         {% if user.is_authenticated %}
           <span class="me-2 text-light">Olá, {{ user.username }}</span>
           <form method="post" action="{% url 'logout' %}" style="display:inline;">
@@ -103,7 +155,35 @@
     {% endblock %}
   </div>
 
-  <!-- Bootstrap Bundle JS -->
+<!-- ===== Rodapé ===== -->
+<footer style="font-size: 0.85rem; padding: 10px 0;">
+  <div class="footer-content" style="display: flex; justify-content: center; align-items: center; gap: 10px; text-align: center; flex-wrap: wrap;">
+    <img src="{% static 'images/logo1.png' %}" alt="Logo INSS" style="height: 32px; margin-left: 15px;">
+    <span style="color: #ccc; line-height: 1.3;">
+      Instituto Nacional do Seguro Social - INSS<br>
+      Coordenação de Formação e Aperfeiçoamento do INSS - CFAI<br>
+      Desenvolvido por <strong>Jean Vinicius, Daniel Simões, Wallisson e Vinicius</strong> — Sistema de Gestão de Materiais INSS
+    </span>
+    <div style="width:38px;"></div> <!-- espaço para manter simetria -->
+  </div>
+</footer>
+
+
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Script de Tema -->
+  <script>
+    const themeSelect = document.getElementById('themeSelect');
+    const savedTheme = localStorage.getItem('theme') || 'escuro';
+    document.body.setAttribute('data-theme', savedTheme);
+    themeSelect.value = savedTheme;
+
+    themeSelect.addEventListener('change', () => {
+      const theme = themeSelect.value;
+      document.body.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+    });
+  </script>
 </body>
 </html>
