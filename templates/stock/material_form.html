@@ -2,11 +2,12 @@
 {% block content %}
 <style>
   .form-container {
-    min-height: calc(100vh - 100px);
+    /* reduce vertical stretching for edit forms so card height matches content */
+    min-height: auto;
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 0.5rem;
+    align-items: flex-start;
+    padding: 1rem 0.5rem 2rem 0.5rem;
   }
 
   .form-card {
@@ -26,6 +27,13 @@
     font-weight: 700;
     margin-bottom: 1rem;
     font-size: 1.3rem;
+  }
+
+  .form-card label {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-color);
   }
 
   /* Inputs */
@@ -80,9 +88,34 @@
 <div class="form-container">
   <div class="form-card">
     <h4>📝 Cadastro de Material</h4>
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
-      {{ form.as_p }}
+      <div style="text-align:left; margin-bottom:0.75rem;">
+        {{ form.nome.label_tag }}<br>
+        {{ form.nome }}
+      </div>
+      <div style="text-align:left; margin-bottom:0.75rem;">
+        {{ form.descricao.label_tag }}<br>
+        {{ form.descricao }}
+      </div>
+      <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+            <div style="flex:1">{{ form.quantidade.label_tag }}{{ form.quantidade }}</div>
+            <div style="width:160px; min-width:120px;">{{ form.minimo.label_tag }}{{ form.minimo }}</div>
+          </div>
+      <div style="text-align:left; margin-top:0.75rem;">
+        {{ form.imagem.label_tag }}<br>
+        {# Render a simple file input to avoid Django's default 'Currently: <path>' output which increases card height #}
+        <input type="file" name="imagem" id="{{ form.imagem.id_for_label }}" accept="image/*">
+      </div>
+
+      {% if form.instance and form.instance.imagem %}
+      <div style="margin-top:0.75rem; text-align:center;">
+        <img src="{{ form.instance.imagem.url }}" alt="preview" style="max-width:150px; max-height:150px; object-fit:cover; border-radius:6px; display:block; margin:0 auto 0.5rem;">
+        <label><input type="checkbox" name="remove_image" value="1"> Remover imagem atual</label>
+      </div>
+      {% endif %}
+
+      <div style="margin-top:0.9rem">{{ form.non_field_errors }} </div>
       <button type="submit">Salvar</button>
     </form>
   </div>

@@ -5,6 +5,7 @@ from django.db import transaction
 class Material(models.Model):
     nome = models.CharField(max_length=200)
     descricao = models.TextField(blank=True)
+    imagem = models.ImageField(upload_to='materiais/', null=True, blank=True)
     quantidade = models.IntegerField(default=0)
     minimo = models.IntegerField(default=0)
     criado = models.DateTimeField(auto_now_add=True)
