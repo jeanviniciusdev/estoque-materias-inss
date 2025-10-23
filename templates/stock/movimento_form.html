@@ -1,7 +1,6 @@
 {% extends 'stock/base.html' %}
 {% block content %}
 <style>
-  /* Centraliza o card do formulário */
   .form-container {
     min-height: calc(100vh - 100px);
     display: flex;
@@ -11,66 +10,65 @@
   }
 
   .form-card {
-    background-color: #001D40;
-    color: #fff;
+    background-color: var(--card-color);
+    color: var(--text-color);
     border-radius: 12px;
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
-    padding: 1rem 1.25rem;
+    padding: 1.2rem 1.5rem;
     width: 100%;
-    max-width: 380px;
+    max-width: 400px;
     text-align: center;
     animation: fadeIn 0.6s ease-in-out;
+    transition: background-color 0.3s, color 0.3s;
   }
 
   .form-card h3 {
     font-weight: 700;
-    margin-bottom: 0.8rem;
-    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
   }
 
-  /* Estilo dos inputs */
-  .form-card input, 
-  .form-card select, 
+  /* Campos do formulário */
+  .form-card input,
+  .form-card select,
   .form-card textarea {
-    background-color: #fff; /* fundo branco */
-    color: #000; /* letra preta */
+    background-color: #fff;
+    color: #000;
     border: 1px solid #2f4c7b;
     border-radius: 6px;
-    padding: 0.35rem 0.5rem;
+    padding: 0.4rem 0.5rem;
     width: 100%;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.7rem;
     transition: all 0.3s ease;
-    font-size: 0.9rem;
-  }
-
-  /* Reduz a altura do textarea se houver */
-  .form-card textarea {
-    height: 2.5rem; 
-    resize: vertical;
-  }
-
-  .form-card input:focus, 
-  .form-card select:focus, 
-  .form-card textarea:focus {
-    border-color: #1C64AE;
-    outline: none;
-  }
-
-  /* Botão de envio verde com letra branca */
-  .form-card button {
-    width: 100%;
-    background-color: #28a745; /* verde */
-    color: #fff; /* letra branca */
-    border: none;
-    font-weight: 600;
-    padding: 0.45rem;
-    transition: background-color 0.3s ease;
-    border-radius: 8px;
     font-size: 0.95rem;
   }
 
+  .form-card textarea {
+    height: 2.5rem;
+    resize: vertical;
+  }
+
+  .form-card input:focus,
+  .form-card select:focus,
+  .form-card textarea:focus {
+    border-color: var(--btn-primary);
+    outline: none;
+  }
+
+  .form-card button {
+    width: 100%;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    padding: 0.5rem;
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
   .form-card button:hover {
-    background-color: #218838; /* verde escuro */
+    background-color: #218838;
   }
 
   @keyframes fadeIn {

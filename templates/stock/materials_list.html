@@ -11,18 +11,20 @@
   </div>
 
   <div class="table-responsive">
-    <table class="table mb-0 text-light" style="background-color: transparent; border-radius: 8px; overflow: hidden;">
+    <table id="materialsTable" class="table mb-0" style="background-color: transparent; border-radius: 8px; overflow: hidden;">
       <thead>
-        <tr style="background-color: #00285E;">
-          <th>Nome</th>
-          <th>Quantidade</th>
-          <th>Mínimo</th>
-          <th>Ações</th>
+        <tr>
+          <th class="text-light">Id</th>
+          <th class="text-light">Nome</th>
+          <th class="text-light">Quantidade</th>
+          <th class="text-light">Mínimo</th>
+          <th class="text-light">Ações</th>
         </tr>
       </thead>
       <tbody>
         {% for m in materiais %}
         <tr class="table-row">
+          <td>{{ forloop.counter }}.</td>
           <td class="fw-semibold">{{ m.nome }}</td>
           <td>{{ m.quantidade }}</td>
           <td>{{ m.minimo }}</td>
@@ -41,7 +43,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="4" class="text-center py-3 text-light">Nenhum material cadastrado.</td>
+          <td colspan="5" class="text-center py-3 text-light">Nenhum material cadastrado.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -119,23 +121,24 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   thead th {
-    color: #FFFFFF;
+    color: var(--text-color);
     font-weight: 600;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.06);
   }
 
-  /* Linhas alternadas */
+  /* Linhas alternadas (use o card color como base, ajustado por tema)
+     cores serão forçadas por `base.html` para azul/escuro/claro */
   tbody tr:nth-child(odd) {
-    background-color: #00285E; /* Azul escuro */
+    background-color: transparent;
   }
 
   tbody tr:nth-child(even) {
-    background-color: #001B3A; /* Azul um pouco mais escuro */
+    background-color: transparent;
   }
 
   /* Hover suave */
   tbody tr:hover {
-    background-color: #013A7A;
+    background-color: rgba(255,255,255,0.03);
     transition: background-color 0.3s ease;
   }
 
@@ -153,6 +156,17 @@ document.addEventListener('DOMContentLoaded', function () {
   .btn-outline-light:hover {
     background-color: #1C64AE;
     border-color: #1C64AE;
+  }
+
+  /* Em tema claro, tornar os botões outline-light na cor primaria (azul) */
+  body[data-theme="claro"] .btn-outline-light {
+    border: 1px solid var(--btn-primary);
+    color: var(--btn-primary);
+  }
+  body[data-theme="claro"] .btn-outline-light:hover {
+    background-color: var(--btn-primary);
+    border-color: var(--btn-primary);
+    color: #fff;
   }
 
   .btn-primary {

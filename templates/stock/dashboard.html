@@ -9,7 +9,24 @@
       <div class="card-body" style="height:350px; padding-bottom:40px;">
         <h4 class="fw-bold mb-3 text-light">📦 Estoque por material</h4>
         <div style="position: relative; height:100%; width:100%;">
-          <canvas id="estoqueChart"></canvas>
+          <!-- Substitui o gráfico por uma tabela com scroll que lista materiais -->
+          <div id="estoqueTableContainer" style="height:90%; width:100%; display:flex; flex-direction:column;">
+            <div style="flex:1 1 auto; overflow:auto;">
+              <table id="estoqueTable" class="table mb-0" style="background-color: transparent; border-radius: 8px;">
+                <thead>
+                  <tr>
+                    <th class="text-light">Id</th>
+                    <th class="text-light">Nome</th>
+                    <th class="text-light">Quantidade</th>
+                    <th class="text-light">Mínimo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="4" class="text-center text-muted">Carregando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -73,70 +90,86 @@ async function loadData() {
   const labels = data.map(d => d.nome);
   const values = data.map(d => d.quantidade);
 
-  // === GRÁFICO 1: Estoque por Material ===
-  const ctx1 = document.getElementById('estoqueChart').getContext('2d');
-  new Chart(ctx1, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Quantidade',
-        data: values,
-        backgroundColor: '#1C64AE',
-        borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: { bottom: 20 } },
-      scales: {
-        x: { ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-        y: { beginAtZero: true, ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } }
-      },
-      plugins: { legend: { position: 'top', labels: { color: '#FFFFFF' } } }
+  // Helper: map theme -> colors
+  function getThemeColors() {
+    const currentTheme = document.body.getAttribute('data-theme') || 'escuro';
+    let textColor = '#FFFFFF';
+    let tooltipBg = '#001D40';
+    let gridColor = 'rgba(255,255,255,0.1)';
+    if (currentTheme === 'claro') {
+      textColor = '#000000';
+      tooltipBg = '#ffffff';
+      gridColor = 'rgba(0,0,0,0.12)';
     }
-  });
+    return { currentTheme, textColor, tooltipBg, gridColor };
+  }
 
-  // === GRÁFICO 2: Comparativo Vertical ===
-  const ctx2 = document.getElementById('comparativoChart').getContext('2d');
-  new Chart(ctx2, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Mínimo',
-          data: data.map(d => d.minimo),
-          backgroundColor: '#C0392B',
-          borderRadius: 6
-        },
-        {
-          label: 'Estoque Atual',
-          data: values,
-          backgroundColor: '#1C64AE',
-          borderRadius: 6
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: { bottom: 20 } },
-      scales: {
-        x: { ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-        y: { beginAtZero: true, ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+  // Populate scrollable table with materials
+  function populateTable(items) {
+    const tbody = document.querySelector('#estoqueTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!items || items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum material encontrado.</td></tr>';
+      return;
+    }
+
+    // Create rows
+    items.forEach((item, idx) => {
+      const tr = document.createElement('tr');
+      const tdIdx = document.createElement('td'); tdIdx.textContent = String(idx + 1) + '.';
+      const tdName = document.createElement('td'); tdName.textContent = item.nome;
+      const tdQty = document.createElement('td'); tdQty.textContent = item.quantidade;
+      const tdMin = document.createElement('td'); tdMin.textContent = item.minimo;
+      tr.appendChild(tdIdx); tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdMin);
+      tbody.appendChild(tr);
+    });
+
+    // Apply theme colors to header and cells
+    const { textColor } = getThemeColors();
+    document.querySelectorAll('#estoqueTable thead th').forEach(th => th.style.color = textColor);
+    document.querySelectorAll('#estoqueTable tbody td').forEach(td => td.style.color = textColor);
+  }
+
+  // Chart 2 only (comparativo)
+  let chart2 = null;
+  function createChart2(items) {
+    const { textColor, tooltipBg, gridColor } = getThemeColors();
+    if (chart2) { chart2.destroy(); chart2 = null; }
+    const ctx2 = document.getElementById('comparativoChart').getContext('2d');
+    chart2 = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: items.map(d => d.nome),
+        datasets: [
+          { label: 'Mínimo', data: items.map(d => d.minimo), backgroundColor: '#C0392B', borderRadius: 6 },
+          { label: 'Estoque Atual', data: items.map(d => d.quantidade), backgroundColor: '#1C64AE', borderRadius: 6 }
+        ]
       },
-      plugins: {
-        legend: { position: 'top', labels: { color: '#FFFFFF' } },
-        tooltip: {
-          enabled: true,
-          backgroundColor: '#001D40',
-          titleColor: '#FFFFFF',
-          bodyColor: '#FFFFFF'
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { bottom: 20 } },
+        scales: {
+          x: { ticks: { color: textColor }, grid: { color: gridColor } },
+          y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor } }
+        },
+        plugins: {
+          legend: { position: 'top', labels: { color: textColor } },
+          tooltip: { enabled: true, backgroundColor: tooltipBg, titleColor: textColor, bodyColor: textColor }
         }
       }
-    }
+    });
+  }
+
+  // initial populate and chart create
+  populateTable(data);
+  createChart2(data);
+
+  // update when theme changes
+  document.addEventListener('themeChanged', () => {
+    populateTable(data);
+    createChart2(data);
   });
 }
 
