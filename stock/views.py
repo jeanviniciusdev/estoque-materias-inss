@@ -46,7 +46,7 @@ def material_list(request):
 @login_required
 def material_create(request):
     if request.method == 'POST':
-        form = MaterialForm(request.POST)
+        form = MaterialForm(request.POST, request.FILES)
         if form.is_valid():
             mat = form.save()
             # Cria um movimento inicial se o material tiver quantidade
@@ -65,7 +65,11 @@ def material_create(request):
 def material_edit(request, pk):
     mat = get_object_or_404(Material, pk=pk)
     if request.method == 'POST':
-        form = MaterialForm(request.POST, instance=mat)
+        form = MaterialForm(request.POST, request.FILES, instance=mat)
+        if request.POST.get('remove_image') == '1':
+            if mat.imagem:
+                mat.imagem.delete(save=False)
+            mat.imagem = None
         if form.is_valid():
             form.save()
             return redirect('materials_list')
@@ -122,7 +126,8 @@ def api_materials(request):
             'id': m.id,
             'nome': m.nome,
             'quantidade': m.quantidade,
-            'minimo': m.minimo
+            'minimo': m.minimo,
+            'imagem_url': (m.imagem.url if getattr(m, 'imagem', None) else None)
         }
         for m in materiais
     ]
@@ -136,7 +141,7 @@ def export_materials_csv(request):
     response['Content-Disposition'] = 'attachment; filename="materiais.csv"'
     response.write('\ufeff')
     writer = csv.writer(response, lineterminator='\r\n')
-    writer.writerow(['ID', 'Nome', 'Descrição', 'Quantidade', 'Mínimo'])
+    writer.writerow(['ID', 'Nome', 'Descrição', 'Quantidade', 'Quantidade ideal'])
     for m in materiais:
         writer.writerow([m.id, m.nome, m.descricao, m.quantidade, m.minimo])
     return response
@@ -220,7 +225,7 @@ def export_alertas_csv(request):
     response.write('\ufeff')  # Adiciona BOM para Excel abrir com acentuação correta
     
     writer = csv.writer(response, lineterminator='\r\n')
-    writer.writerow(['ID', 'Nome', 'Descrição', 'Quantidade Atual', 'Mínimo Necessário'])
+    writer.writerow(['ID', 'Nome', 'Descrição', 'Quantidade Atual', 'Quantidade ideal'])
     
     for mat in alertas:
         writer.writerow([mat.id, mat.nome, mat.descricao, mat.quantidade, mat.minimo])

@@ -75,7 +75,9 @@
     body[data-theme="azul"] #estoqueTable,
     body[data-theme="escuro"] #estoqueTable,
     body[data-theme="azul"] #materialsTable,
-    body[data-theme="escuro"] #materialsTable {
+    body[data-theme="escuro"] #materialsTable,
+    body[data-theme="azul"] #alertasTable,
+    body[data-theme="escuro"] #alertasTable {
       background-color: var(--card-color) !important;
       color: var(--text-color);
     }
@@ -94,7 +96,15 @@
     body[data-theme="escuro"] #materialsTable thead th,
     body[data-theme="escuro"] #materialsTable tbody td,
     body[data-theme="escuro"] #materialsTable tbody tr,
-    body[data-theme="escuro"] #materialsTable tbody tr td {
+    body[data-theme="escuro"] #materialsTable tbody tr td,
+    body[data-theme="azul"] #alertasTable thead th,
+    body[data-theme="azul"] #alertasTable tbody td,
+    body[data-theme="azul"] #alertasTable tbody tr,
+    body[data-theme="azul"] #alertasTable tbody tr td,
+    body[data-theme="escuro"] #alertasTable thead th,
+    body[data-theme="escuro"] #alertasTable tbody td,
+    body[data-theme="escuro"] #alertasTable tbody tr,
+    body[data-theme="escuro"] #alertasTable tbody tr td {
       background: transparent !important;
       color: var(--text-color) !important;
     }
@@ -102,15 +112,37 @@
     body[data-theme="azul"] #estoqueTable.table-striped tbody tr:nth-of-type(odd),
     body[data-theme="escuro"] #estoqueTable.table-striped tbody tr:nth-of-type(odd),
     body[data-theme="azul"] #materialsTable.table-striped tbody tr:nth-of-type(odd),
-    body[data-theme="escuro"] #materialsTable.table-striped tbody tr:nth-of-type(odd) {
+    body[data-theme="escuro"] #materialsTable.table-striped tbody tr:nth-of-type(odd),
+    body[data-theme="azul"] #alertasTable.table-striped tbody tr:nth-of-type(odd),
+    body[data-theme="escuro"] #alertasTable.table-striped tbody tr:nth-of-type(odd) {
       background: transparent !important;
+    }
+
+    /* Make material name links white and underlined when AZUL or ESCURO themes are active
+       This keeps CLARO unaffected (CLARO uses dark/black text). */
+    body[data-theme="azul"] .material-name,
+    body[data-theme="escuro"] .material-name {
+      color: var(--text-color) !important;
+      text-decoration: underline !important;
+      text-decoration-color: var(--text-color) !important;
+    }
+    /* Ensure hover/focus keep white underline for accessibility */
+    body[data-theme="azul"] .material-name:hover,
+    body[data-theme="azul"] .material-name:focus,
+    body[data-theme="escuro"] .material-name:hover,
+    body[data-theme="escuro"] .material-name:focus {
+      color: var(--text-color) !important;
+      text-decoration: underline !important;
+      text-decoration-color: var(--text-color) !important;
     }
 
     /* For theme claro: force table text dark and line/border colors darker */
     body[data-theme="claro"] #materialsTable thead th,
     body[data-theme="claro"] #materialsTable tbody td,
     body[data-theme="claro"] #estoqueTable thead th,
-    body[data-theme="claro"] #estoqueTable tbody td {
+    body[data-theme="claro"] #estoqueTable tbody td,
+    body[data-theme="claro"] #alertasTable thead th,
+    body[data-theme="claro"] #alertasTable tbody td {
       color: var(--text-color) !important; /* should be black */
     }
     body[data-theme="claro"] #materialsTable thead th {
@@ -189,11 +221,21 @@
       transform-origin: center;
     }
 
+    /* Home icon styling: color follows theme via --text-color */
+    .home-icon {
+      width: 60px;
+      height: 30px;
+      display: inline-block;
+      vertical-align: middle;
+      transition: fill 0.12s ease;
+    }
+    .home-icon path { fill: var(--text-color); }
+
     footer span {
       flex: 1;
       text-align: center;
     }
-
+     
     /* ===== Estilo do modal de exclusão adaptado aos temas ===== */
 .modal .modal-content {
   background-color: var(--card-color) !important;
@@ -237,10 +279,15 @@
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
     <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
+      <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}" aria-label="Ir para o painel">
         <img id="brandLogo" src="{% static 'images/logo3.png' %}" alt="Logo" height="48" class="me-2"
              data-default="{% static 'images/logo3.png' %}" data-claro="{% static 'images/logo4.png' %}">
         <span class="fw-bold text-light">Gestão Materiais</span>
+        {% if user.is_authenticated %}
+        <svg class="home-icon ms-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true">
+          <path d="M3 10.5L12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10.5z" />
+        </svg>
+        {% endif %}
       </a>
 
       <div class="d-flex align-items-center">
