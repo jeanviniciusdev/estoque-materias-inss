@@ -1,0 +1,85 @@
+{% extends 'stock/base.html' %}
+{% block content %}
+
+<div class="container mt-4">
+  <div class="card shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <!-- Cabeçalho -->
+    <div class="card-body bg-warning text-dark d-flex justify-content-between align-items-center">
+      <h4 class="fw-bold mb-0">📋 Empréstimos em andamento</h4>
+      <div class="btn-group">
+        <a href="{% url 'export_emprestimos' %}?format=csv" class="btn btn-sm btn-outline-dark">CSV</a>
+        <a href="{% url 'export_emprestimos' %}?format=xlsx" class="btn btn-sm btn-outline-dark">Excel</a>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card-body">
+      <table class="table table-hover table-bordered align-middle text-center">
+        <thead class="table-dark">
+          <tr>
+            <th>Material</th>
+            <th>Usuário</th>
+            <th>Quantidade</th>
+            <th>Data de devolução</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% now "Y-m-d" as hoje %}
+          {% for e in emprestimos %}
+          <tr>
+            <!-- Nome do material -->
+            <td>{{ e.material.nome }}</td>
+
+            <!-- Usuário -->
+            <td>{{ e.usuario.username }}</td>
+
+            <!-- Quantidade -->
+            <td>{{ e.quantidade }}</td>
+
+            <!-- Data de devolução -->
+            <td>
+              {% if e.data_devolucao %}
+                {% if e.data_devolucao|stringformat:'s' < hoje %}
+                  <strong style="color:#FF3333;">{{ e.data_devolucao|date:"d/m/Y" }}</strong>
+                {% else %}
+                  {{ e.data_devolucao|date:"d/m/Y" }}
+                {% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+
+          <!-- Status -->
+          <td style="color: {{ e.status_color }};">{{ e.status_label }}</td>
+
+            <!-- Ações -->
+            <td>
+              <div class="d-flex justify-content-center gap-2">
+                <!-- Botão para marcar como concluído -->
+                <form method="post" action="{% url 'concluir_emprestimo' e.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-sm" title="Marcar como concluído">✓</button>
+                </form>
+
+                <!-- Botão para deletar -->
+                <form method="post" action="{% url 'deletar_emprestimo' e.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger btn-sm" title="Excluir">✕</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-muted text-center">Nenhum empréstimo em andamento.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'stock/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="alert alert-warning shadow-sm">
+    <h5>Tem certeza que deseja excluir este empréstimo?</h5>
+    <p><strong>{{ emprestimo.material.nome }}</strong> — Quantidade: {{ emprestimo.quantidade }}</p>
+    <form method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Sim, excluir</button>
+      <a href="{% url 'emprestimos_list' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,92 +1,100 @@
 {% extends 'stock/base.html' %}
 {% block content %}
 <style>
-  /* Centraliza o card do formulário */
   .form-container {
     min-height: calc(100vh - 100px);
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0.5rem;
+    padding: 1.25rem;
   }
 
   .form-card {
     background-color: #001D40;
     color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
-    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    padding: 1.4rem;
     width: 100%;
-    max-width: 380px;
-    text-align: center;
-    animation: fadeIn 0.6s ease-in-out;
+    max-width: 420px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
   }
 
-  .form-card h3 {
-    font-weight: 700;
-    margin-bottom: 0.8rem;
-    font-size: 1.2rem;
+  .form-card h4 { margin-bottom: 0.9rem; font-weight:700; }
+  .form-group { margin-bottom: 1.0rem; } /* maior espaçamento entre campos */
+  .form-card label { display:block; margin-bottom:0.35rem; color:#fff; font-weight:700; }
+  .form-card input, .form-card select, .form-card textarea {
+    width:100%; padding:0.55rem; border-radius:6px; border:1px solid #2f4c7b; background:#fff; color:#000;
   }
+  .form-card textarea { min-height:80px; resize:vertical; }
 
-  /* Estilo dos inputs */
-  .form-card input, 
-  .form-card select, 
-  .form-card textarea {
-    background-color: #fff; /* fundo branco */
-    color: #000; /* letra preta */
-    border: 1px solid #2f4c7b;
-    border-radius: 6px;
-    padding: 0.35rem 0.5rem;
-    width: 100%;
-    margin-bottom: 0.6rem;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-  }
-
-  /* Reduz a altura do textarea se houver */
-  .form-card textarea {
-    height: 2.5rem; 
-    resize: vertical;
-  }
-
-  .form-card input:focus, 
-  .form-card select:focus, 
-  .form-card textarea:focus {
-    border-color: #1C64AE;
-    outline: none;
-  }
-
-  /* Botão de envio verde com letra branca */
-  .form-card button {
-    width: 100%;
-    background-color: #28a745; /* verde */
-    color: #fff; /* letra branca */
-    border: none;
-    font-weight: 600;
-    padding: 0.45rem;
-    transition: background-color 0.3s ease;
-    border-radius: 8px;
-    font-size: 0.95rem;
-  }
-
-  .form-card button:hover {
-    background-color: #218838; /* verde escuro */
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+  #group-data-devolucao label { font-weight:700; } /* label destacado */
+  .btn-register {
+    width:100%;
+    background-color:#28a745;
+    color:#fff;
+    border:none;
+    padding:0.6rem;
+    border-radius:8px;
+    font-weight:700;
+    margin-top:0.4rem;
   }
 </style>
 
 <div class="form-container">
-  <div class="form-card">
-    <h3>🔃 Registrar Movimento</h3>
+  <div class="form-card base-equal">
+    <h4>🔃 Registrar Movimento</h4>
+
     <form method="post">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit">Registrar</button>
+
+      <div class="form-group">
+        <label for="id_material">Material</label>
+        {{ form.material }}
+      </div>
+
+      <div class="form-group">
+        <label for="id_tipo">Tipo</label>
+        {{ form.tipo }}
+      </div>
+
+      <div class="form-group">
+        <label for="id_quantidade">Quantidade</label>
+        {{ form.quantidade }}
+      </div>
+
+      <div class="form-group">
+        <label for="id_nota">Nota</label>
+        {{ form.nota }}
+      </div>
+
+      <div class="form-group" id="group-data-devolucao" style="display:none;">
+        <label for="id_data_devolucao">Data de devolução:</label>
+        {{ form.data_devolucao }}
+      </div>
+
+      <button type="submit" class="btn-register">Registrar</button>
     </form>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const tipo = document.getElementById('id_tipo');
+  const group = document.getElementById('group-data-devolucao');
+
+  function toggleDevolucao() {
+    if (!tipo) return;
+    if (tipo.value === 'EMPRESTIMO') {
+      group.style.display = 'block';
+    } else {
+      group.style.display = 'none';
+      const fld = document.getElementById('id_data_devolucao');
+      if (fld) fld.value = '';
+    }
+  }
+
+  toggleDevolucao();
+  if (tipo) tipo.addEventListener('change', toggleDevolucao);
+});
+</script>
 {% endblock %}

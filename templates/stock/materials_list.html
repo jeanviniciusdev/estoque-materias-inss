@@ -3,10 +3,34 @@
 <div class="card shadow-sm p-4 mb-3" style="background-color: #001D40; border-radius: 10px;">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold text-light mb-0">📦 Materiais</h2>
-    <div>
+
+    <div class="d-flex gap-2 align-items-center">
+      <!-- Adicionar material (mantém) -->
       <a class="btn btn-success me-2" href="{% url 'materials_add' %}">Adicionar material</a>
-      <a class="btn btn-outline-light me-2" href="{% url 'export_materials_csv' %}">Exportar materiais (CSV)</a>
-      <a class="btn btn-outline-light" href="{% url 'export_movements_csv' %}">Exportar movimentos (CSV)</a>
+
+      <!-- Exportar Materiais (dropdown CSV / XLSX) -->
+      <div class="btn-group">
+        <button type="button" class="btn btn-outline-light btn-sm">Exportar Materiais</button>
+        <button type="button" class="btn btn-outline-light btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle</span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="{% url 'export_materials_csv' %}?format=csv">CSV</a></li>
+          <li><a class="dropdown-item" href="{% url 'export_materials_csv' %}?format=xlsx">Excel (.xlsx)</a></li>
+        </ul>
+      </div>
+
+      <!-- Exportar Movimentos (dropdown CSV / XLSX) -->
+      <div class="btn-group">
+        <button type="button" class="btn btn-outline-light btn-sm">Exportar Movimentos</button>
+        <button type="button" class="btn btn-outline-light btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle</span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="{% url 'export_movements_csv' %}?format=csv">CSV</a></li>
+          <li><a class="dropdown-item" href="{% url 'export_movements_csv' %}?format=xlsx">Excel (.xlsx)</a></li>
+        </ul>
+      </div>
     </div>
   </div>
 
