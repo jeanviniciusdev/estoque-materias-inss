@@ -2,77 +2,122 @@
 {% block content %}
 <style>
   .form-container {
-    min-height: calc(100vh - 100px);
+    /* reduz altura vertical para formulários de edição */
+    min-height: auto;
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 1rem;
+    align-items: flex-start;
+    padding: 1rem 0.5rem 2rem 0.5rem;
   }
+
   .form-card {
-    background-color: #001D40;
-    color: #fff;
-    border-radius: 10px;
-    padding: 1.25rem;
+    background-color: var(--card-color);
+    color: var(--text-color);
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+    padding: 1.2rem 1.5rem;
     width: 100%;
     max-width: 420px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    text-align: center;
+    animation: fadeIn 0.6s ease-in-out;
+    transition: background-color 0.3s, color 0.3s;
+    min-height: 480px; /* da D-Branch, mantém altura equilibrada */
   }
-  .form-card h4 { margin-bottom: 0.75rem; font-weight:700; }
-  .form-group { margin-bottom: 0.9rem; } /* leve aumento de espaçamento entre campos */
-  .form-card label { display:block; margin-bottom:0.25rem; color:#fff; font-weight:700; }
-  .form-card input, .form-card select, .form-card textarea {
-    width:100%; padding:0.45rem; border-radius:6px; border:1px solid #2f4c7b; background:#fff; color:#000;
+
+  .form-card h4 {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
   }
-  /* descrição menor: alvo específico do campo Descrição */
-  #id_descricao {
-    min-height: 40px;
-    height: 40px;
+
+  .form-card label {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-color);
+    font-weight: 600;
+  }
+
+  /* Inputs */
+  .form-card input,
+  .form-card select,
+  .form-card textarea {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #2f4c7b;
+    border-radius: 6px;
+    padding: 0.45rem 0.5rem;
+    width: 100%;
+    margin-bottom: 0.7rem;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+  }
+
+  .form-card textarea {
+    height: 6rem;
     resize: vertical;
   }
-  .btn-save {
-    width:100%;
-    background-color:#28a745;
-    color:#fff;
-    border:none;
-    padding:0.55rem;
-    border-radius:8px;
-    font-weight:700;
-    margin-top:0.6rem;
+
+  .form-card input:focus,
+  .form-card select:focus,
+  .form-card textarea:focus {
+    border-color: var(--btn-primary);
+    outline: none;
   }
-  /* altura base unificada para ambos formulários */
-  .form-card.base-equal {
-    min-height: 480px; /* ajuste esse valor se quiser mais/menos altura */
+
+  .form-card button {
+    width: 100%;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    padding: 0.5rem;
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  .form-card button:hover {
+    background-color: #218838;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>
 
 <div class="form-container">
-  <div class="form-card base-equal">
+  <div class="form-card">
     <h4>📝 Cadastro de Material</h4>
-
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
-
-      <div class="form-group">
-        <label for="id_nome">Nome</label>
+      <div style="text-align:left; margin-bottom:0.75rem;">
+        {{ form.nome.label_tag }}<br>
         {{ form.nome }}
       </div>
-
-      <div class="form-group">
-        <label for="id_descricao">Descrição</label>
+      <div style="text-align:left; margin-bottom:0.75rem;">
+        {{ form.descricao.label_tag }}<br>
         {{ form.descricao }}
       </div>
-
-      <div class="form-group">
-        <label for="id_quantidade">Quantidade</label>
-        {{ form.quantidade }}
+      <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+        <div style="flex:1">{{ form.quantidade.label_tag }}{{ form.quantidade }}</div>
+        <div style="width:160px; min-width:120px;">{{ form.minimo.label_tag }}{{ form.minimo }}</div>
+      </div>
+      <div style="text-align:left; margin-top:0.75rem;">
+        {{ form.imagem.label_tag }}<br>
+        <input type="file" name="imagem" id="{{ form.imagem.id_for_label }}" accept="image/*">
       </div>
 
-      <div class="form-group">
-        <label for="id_minimo">Mínimo</label>
-        {{ form.minimo }}
+      {% if form.instance and form.instance.imagem %}
+      <div style="margin-top:0.75rem; text-align:center;">
+        <img src="{{ form.instance.imagem.url }}" alt="preview" style="max-width:150px; max-height:150px; object-fit:cover; border-radius:6px; display:block; margin:0 auto 0.5rem;">
+        <label><input type="checkbox" name="remove_image" value="1"> Remover imagem atual</label>
       </div>
+      {% endif %}
 
-      <button type="submit" class="btn-save">Salvar</button>
+      <div style="margin-top:0.9rem">{{ form.non_field_errors }}</div>
+      <button type="submit">Salvar</button>
     </form>
   </div>
 </div>

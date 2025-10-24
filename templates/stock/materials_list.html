@@ -35,19 +35,27 @@
   </div>
 
   <div class="table-responsive">
-    <table class="table mb-0 text-light" style="background-color: transparent; border-radius: 8px; overflow: hidden;">
+    <table id="materialsTable" class="table mb-0" style="background-color: transparent; border-radius: 8px; overflow: hidden;">
       <thead>
-        <tr style="background-color: #00285E;">
-          <th>Nome</th>
-          <th>Quantidade</th>
-          <th>Mínimo</th>
-          <th>Ações</th>
+        <tr>
+          <th class="text-light">Id</th>
+          <th class="text-light">Nome</th>
+          <th class="text-light">Quantidade</th>
+          <th class="text-light">Quantidade ideal</th>
+          <th class="text-light">Ações</th>
         </tr>
       </thead>
       <tbody>
         {% for m in materiais %}
         <tr class="table-row">
-          <td class="fw-semibold">{{ m.nome }}</td>
+          <td>{{ forloop.counter }}.</td>
+          <td class="fw-semibold">
+            {% if m.imagem %}
+              <a href="#" class="material-name" data-img-url="{{ m.imagem.url }}">{{ m.nome }}</a>
+            {% else %}
+              {{ m.nome }}
+            {% endif %}
+          </td>
           <td>{{ m.quantidade }}</td>
           <td>{{ m.minimo }}</td>
           <td>
@@ -65,7 +73,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="4" class="text-center py-3 text-light">Nenhum material cadastrado.</td>
+          <td colspan="5" class="text-center py-3 text-light">Nenhum material cadastrado.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -143,23 +151,24 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   thead th {
-    color: #FFFFFF;
+    color: var(--text-color);
     font-weight: 600;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.06);
   }
 
-  /* Linhas alternadas */
+  /* Linhas alternadas (use o card color como base, ajustado por tema)
+     cores serão forçadas por `base.html` para azul/escuro/claro */
   tbody tr:nth-child(odd) {
-    background-color: #00285E; /* Azul escuro */
+    background-color: transparent;
   }
 
   tbody tr:nth-child(even) {
-    background-color: #001B3A; /* Azul um pouco mais escuro */
+    background-color: transparent;
   }
 
   /* Hover suave */
   tbody tr:hover {
-    background-color: #013A7A;
+    background-color: rgba(255,255,255,0.03);
     transition: background-color 0.3s ease;
   }
 
@@ -177,6 +186,17 @@ document.addEventListener('DOMContentLoaded', function () {
   .btn-outline-light:hover {
     background-color: #1C64AE;
     border-color: #1C64AE;
+  }
+
+  /* Em tema claro, tornar os botões outline-light na cor primaria (azul) */
+  body[data-theme="claro"] .btn-outline-light {
+    border: 1px solid var(--btn-primary);
+    color: var(--btn-primary);
+  }
+  body[data-theme="claro"] .btn-outline-light:hover {
+    background-color: var(--btn-primary);
+    border-color: var(--btn-primary);
+    color: #fff;
   }
 
   .btn-primary {
@@ -203,4 +223,35 @@ document.addEventListener('DOMContentLoaded', function () {
     background-color: #229954;
   }
 </style>
+<!-- Image preview modal (centered) -->
+<div id="imgModal" class="img-modal-overlay" style="display:none;">
+  <div class="img-modal-content">
+    <button type="button" class="img-modal-close" aria-label="Fechar">×</button>
+    <img id="imgModalImg" src="" alt="Preview" class="img-modal-img">
+  </div>
+</div>
+
+<style>
+  .img-modal-overlay{position:fixed;inset:0;display:none;background:rgba(0,0,0,0.65);justify-content:center;align-items:center;z-index:1200}
+  .img-modal-content{position:relative;max-width:96vw;max-height:92vh;display:flex;justify-content:center;align-items:center}
+  .img-modal-img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,0.6)}
+  .img-modal-close{position:absolute;top:-10px;right:-10px;background:#fff;border-radius:50%;width:36px;height:36px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.25)}
+</style>
+
+<script>
+document.addEventListener('click', function(e){
+  const a = e.target.closest && e.target.closest('.material-name');
+  if (a){
+    e.preventDefault();
+    const url = a.dataset.imgUrl;
+    if (!url) return;
+    const modal = document.getElementById('imgModal');
+    const img = document.getElementById('imgModalImg');
+    const close = modal.querySelector('.img-modal-close');
+    img.src = url; modal.style.display = 'flex'; document.body.style.overflow='hidden';
+    function hide(){ modal.style.display='none'; img.src=''; document.body.style.overflow=''; }
+    close.onclick = hide; modal.onclick = (ev)=>{ if(ev.target===modal) hide(); };
+  }
+});
+</script>
 {% endblock %}

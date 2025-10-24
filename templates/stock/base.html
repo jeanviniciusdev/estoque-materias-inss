@@ -11,79 +11,292 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
 
   <!-- Custom CSS -->
   <style>
+    :root {
+      --bg-color: #01132E;
+      --navbar-color: #001D40;
+      --card-color: #001D40;
+      --text-color: #ffffff;
+      --btn-primary: #1C64AE;
+      --btn-outline: #1C64AE;
+    }
+
     body {
-      background-color: #01132E !important;
-      color: #ffffff;
+      background-color: var(--bg-color) !important;
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
     .navbar {
-      background-color: #001D40 !important;
-    }
-
-    .container {
-      background-color: transparent !important;
+      background-color: var(--navbar-color) !important;
+      transition: background-color 0.3s;
     }
 
     .card {
-      background-color: #001D40 !important;
-      color: #ffffff;
+      background-color: var(--card-color) !important;
+      color: var(--text-color);
       border: none;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.3s, color 0.3s;
     }
 
     .btn-primary {
-      background-color: #1C64AE !important;
+      background-color: var(--btn-primary) !important;
       border: none;
     }
 
     .btn-outline-secondary {
-      color: #fff !important;
-      border-color: #1C64AE !important;
+      color: var(--text-color) !important;
+      border-color: var(--btn-outline) !important;
     }
 
     .btn-outline-secondary:hover {
-      background-color: #1C64AE !important;
+      background-color: var(--btn-outline) !important;
     }
 
-    /* Novas regras para legibilidade do modal de exclusão */
-    .modal .modal-header {
-      background-color: #dc3545 !important; /* fundo vermelho */
-      color: #fff !important;
+    body[data-theme="azul"] {
+      --bg-color: #082757;
+      --navbar-color: #0C2F6B;
+      --card-color: #133E87;
+      --text-color: #ffffff;
+      --btn-primary: #2E6CCB;
+      --btn-outline: #2E6CCB;
     }
-    .modal .modal-header .modal-title,
-    .modal .modal-header .btn-close {
-      color: #fff !important;
+
+    /* Make tables inside cards use the same card background on dark/blue themes
+       so white text remains visible (applies to dashboard and materials list). */
+    body[data-theme="azul"] #estoqueTable,
+    body[data-theme="escuro"] #estoqueTable,
+    body[data-theme="azul"] #materialsTable,
+    body[data-theme="escuro"] #materialsTable,
+    body[data-theme="azul"] #alertasTable,
+    body[data-theme="escuro"] #alertasTable {
+      background-color: var(--card-color) !important;
+      color: var(--text-color);
     }
-    .modal .modal-content {
-      background-color: #001D40 !important; /* mantém tema escuro */
-      color: #fff !important;
+    body[data-theme="azul"] #estoqueTable thead th,
+    body[data-theme="azul"] #estoqueTable tbody td,
+    body[data-theme="azul"] #estoqueTable tbody tr,
+    body[data-theme="azul"] #estoqueTable tbody tr td,
+    body[data-theme="escuro"] #estoqueTable thead th,
+    body[data-theme="escuro"] #estoqueTable tbody td,
+    body[data-theme="escuro"] #estoqueTable tbody tr,
+    body[data-theme="escuro"] #estoqueTable tbody tr td,
+    body[data-theme="azul"] #materialsTable thead th,
+    body[data-theme="azul"] #materialsTable tbody td,
+    body[data-theme="azul"] #materialsTable tbody tr,
+    body[data-theme="azul"] #materialsTable tbody tr td,
+    body[data-theme="escuro"] #materialsTable thead th,
+    body[data-theme="escuro"] #materialsTable tbody td,
+    body[data-theme="escuro"] #materialsTable tbody tr,
+    body[data-theme="escuro"] #materialsTable tbody tr td,
+    body[data-theme="azul"] #alertasTable thead th,
+    body[data-theme="azul"] #alertasTable tbody td,
+    body[data-theme="azul"] #alertasTable tbody tr,
+    body[data-theme="azul"] #alertasTable tbody tr td,
+    body[data-theme="escuro"] #alertasTable thead th,
+    body[data-theme="escuro"] #alertasTable tbody td,
+    body[data-theme="escuro"] #alertasTable tbody tr,
+    body[data-theme="escuro"] #alertasTable tbody tr td {
+      background: transparent !important;
+      color: var(--text-color) !important;
     }
-    .modal .modal-body {
-      color: #fff !important;
+    /* striping can add backgrounds; force transparent */
+    body[data-theme="azul"] #estoqueTable.table-striped tbody tr:nth-of-type(odd),
+    body[data-theme="escuro"] #estoqueTable.table-striped tbody tr:nth-of-type(odd),
+    body[data-theme="azul"] #materialsTable.table-striped tbody tr:nth-of-type(odd),
+    body[data-theme="escuro"] #materialsTable.table-striped tbody tr:nth-of-type(odd),
+    body[data-theme="azul"] #alertasTable.table-striped tbody tr:nth-of-type(odd),
+    body[data-theme="escuro"] #alertasTable.table-striped tbody tr:nth-of-type(odd) {
+      background: transparent !important;
     }
-    .modal .modal-footer {
-      background-color: transparent !important;
+
+    /* Make material name links white and underlined when AZUL or ESCURO themes are active
+       This keeps CLARO unaffected (CLARO uses dark/black text). */
+    body[data-theme="azul"] .material-name,
+    body[data-theme="escuro"] .material-name {
+      color: var(--text-color) !important;
+      text-decoration: underline !important;
+      text-decoration-color: var(--text-color) !important;
     }
+    /* Ensure hover/focus keep white underline for accessibility */
+    body[data-theme="azul"] .material-name:hover,
+    body[data-theme="azul"] .material-name:focus,
+    body[data-theme="escuro"] .material-name:hover,
+    body[data-theme="escuro"] .material-name:focus {
+      color: var(--text-color) !important;
+      text-decoration: underline !important;
+      text-decoration-color: var(--text-color) !important;
+    }
+
+    /* For theme claro: force table text dark and line/border colors darker */
+    body[data-theme="claro"] #materialsTable thead th,
+    body[data-theme="claro"] #materialsTable tbody td,
+    body[data-theme="claro"] #estoqueTable thead th,
+    body[data-theme="claro"] #estoqueTable tbody td,
+    body[data-theme="claro"] #alertasTable thead th,
+    body[data-theme="claro"] #alertasTable tbody td {
+      color: var(--text-color) !important; /* should be black */
+    }
+    body[data-theme="claro"] #materialsTable thead th {
+      border-bottom: 2px solid rgba(0,0,0,0.12) !important;
+    }
+
+    body[data-theme="claro"] {
+      --bg-color: #f0f4f8;
+      --navbar-color: #ffffff;
+      --card-color: #ffffff;
+      --text-color: #000000;
+      --btn-primary: #1C64AE;
+      --btn-outline: #1C64AE;
+    }
+
+    /* Ajustes para utilitários Bootstrap quando o tema claro está ativo.
+       Muitas headings ainda usam classes como `text-light` — sobrescrevemos
+       aqui para que, no tema claro, fiquem com a cor do texto (preto). */
+    body[data-theme="claro"] .text-light {
+      color: var(--text-color) !important;
+    }
+    body[data-theme="claro"] .text-dark {
+      color: var(--text-color) !important;
+    }
+
+    .theme-selector {
+      background: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--btn-outline);
+      border-radius: 8px;
+      padding: 4px 8px;
+    }
+
+    .theme-selector option {
+      color: #000;
+    }
+
+    /* ===== Rodapé ===== */
+    footer {
+      background-color: var(--navbar-color);
+      color: var(--text-color);
+      margin-top: auto;
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    footer .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      text-align: center;
+    }
+
+    footer img {
+      height: 38px;
+    }
+
+    /* Ensure brand and footer logos keep intended sizes when swapped */
+    #brandLogo {
+      height: 48px !important;
+      width: auto !important;
+      object-fit: contain;
+    }
+
+    #footerLogo {
+      height: 32px !important;
+      width: auto !important;
+      object-fit: contain;
+    }
+    /* smooth resize when swapping logos */
+    #brandLogo, #footerLogo {
+      display: block;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+      transform-origin: center;
+    }
+
+    /* Home icon styling: color follows theme via --text-color */
+    .home-icon {
+      width: 60px;
+      height: 30px;
+      display: inline-block;
+      vertical-align: middle;
+      transition: fill 0.12s ease;
+    }
+    .home-icon path { fill: var(--text-color); }
+
+    footer span {
+      flex: 1;
+      text-align: center;
+    }
+     
+    /* ===== Estilo do modal de exclusão adaptado aos temas ===== */
+.modal .modal-content {
+  background-color: var(--card-color) !important;
+  color: var(--text-color) !important;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.modal .modal-header {
+  background-color: var(--btn-danger, #dc3545) !important;
+  color: #fff !important;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.modal .modal-header .modal-title,
+.modal .modal-header .btn-close {
+  color: #fff !important;
+  filter: invert(1); /* deixa o X visível em temas escuros */
+}
+
+.modal .modal-body textarea {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  width: 100%;
+  padding: 8px;
+}
+
+.modal .modal-footer {
+  background-color: transparent !important;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
   </style>
-
-  <link rel="stylesheet" href="{% static 'css/custom.css' %}">
 </head>
 
 <body>
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
     <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
-        <img src="{% static 'images/logo1.png' %}" alt="Logo" height="48" class="me-2">
+      <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}" aria-label="Ir para o painel">
+        <img id="brandLogo" src="{% static 'images/logo3.png' %}" alt="Logo" height="48" class="me-2"
+             data-default="{% static 'images/logo3.png' %}" data-claro="{% static 'images/logo4.png' %}">
         <span class="fw-bold text-light">Gestão Materiais</span>
+        {% if user.is_authenticated %}
+        <svg class="home-icon ms-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true">
+          <path d="M3 10.5L12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10.5z" />
+        </svg>
+        {% endif %}
       </a>
 
       <div class="d-flex align-items-center">
+        <select id="themeSelect" class="theme-selector me-3">
+          <option value="azul">🟦 Azul</option>
+            <option value="escuro">🌙 Escuro</option>
+          <option value="claro">☀️ Claro</option>
+        </select>
+
         {% if user.is_authenticated %}
           <span class="me-2 text-light">Olá, {{ user.username }}</span>
           <form method="post" action="{% url 'logout' %}" style="display:inline;">
@@ -103,7 +316,71 @@
     {% endblock %}
   </div>
 
-  <!-- Bootstrap Bundle JS -->
+<!-- ===== Rodapé ===== -->
+<footer style="font-size: 0.85rem; padding: 10px 0;">
+  <div class="footer-content" style="display: flex; justify-content: center; align-items: center; gap: 10px; text-align: center; flex-wrap: wrap;">
+    <img id="footerLogo" src="{% static 'images/logo3.png' %}" alt="Logo INSS" style="height: 32px; margin-left: 15px;"
+      data-default="{% static 'images/logo3.png' %}" data-claro="{% static 'images/logo4.png' %}">
+    <span style="color: var(--text-color); line-height: 1.3;">
+      Instituto Nacional do Seguro Social - INSS<br>
+      Coordenação de Formação e Aperfeiçoamento do INSS - CFAI<br>
+      Desenvolvido por <strong>Jean Vinicius, Daniel Simões, Wallisson e Vinicius</strong> — Sistema de Gestão de Materiais INSS
+    </span>
+    <div style="width:38px;"></div> <!-- espaço para manter simetria -->
+  </div>
+</footer>
+
+
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Script de Tema -->
+  <script>
+    const themeSelect = document.getElementById('themeSelect');
+    const savedTheme = localStorage.getItem('theme') || 'escuro';
+    document.body.setAttribute('data-theme', savedTheme);
+    themeSelect.value = savedTheme;
+
+    themeSelect.addEventListener('change', () => {
+      const theme = themeSelect.value;
+      document.body.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      // Notify other scripts (e.g., charts) that the theme changed
+      try {
+        document.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
+      } catch (e) {
+        // older browsers: fallback to a short timeout update pattern
+        setTimeout(() => document.dispatchEvent(new Event('themeChanged')), 0);
+      }
+    });
+    
+    // Swap logos when theme is 'claro'
+    const brandLogo = document.getElementById('brandLogo');
+    const footerLogo = document.getElementById('footerLogo');
+    function updateLogosForTheme(theme) {
+      if (!brandLogo || !footerLogo) return;
+      if (theme === 'claro') {
+        brandLogo.src = brandLogo.getAttribute('data-claro');
+        footerLogo.src = footerLogo.getAttribute('data-claro');
+        // apply slight scale to compensate different image dimensions
+        brandLogo.style.transform = 'scale(1.05)';
+        footerLogo.style.transform = 'scale(1.05)';
+      } else {
+        brandLogo.src = brandLogo.getAttribute('data-default');
+        footerLogo.src = footerLogo.getAttribute('data-default');
+        brandLogo.style.transform = '';
+        footerLogo.style.transform = '';
+      }
+    }
+
+    // initial set
+    updateLogosForTheme(savedTheme);
+
+    // update on theme change events
+    document.addEventListener('themeChanged', (e) => {
+      const t = (e && e.detail && e.detail.theme) ? e.detail.theme : document.body.getAttribute('data-theme');
+      updateLogosForTheme(t);
+    });
+  </script>
 </body>
 </html>

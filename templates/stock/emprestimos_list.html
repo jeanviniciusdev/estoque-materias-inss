@@ -2,84 +2,180 @@
 {% block content %}
 
 <div class="container mt-4">
-  <div class="card shadow-sm" style="border-radius: 12px; overflow: hidden;">
-    <!-- Cabeçalho -->
-    <div class="card-body bg-warning text-dark d-flex justify-content-between align-items-center">
-      <h4 class="fw-bold mb-0">📋 Empréstimos em andamento</h4>
-      <div class="btn-group">
-        <a href="{% url 'export_emprestimos' %}?format=csv" class="btn btn-sm btn-outline-dark">CSV</a>
-        <a href="{% url 'export_emprestimos' %}?format=xlsx" class="btn btn-sm btn-outline-dark">Excel</a>
+  <div class="card shadow-sm" style="border-radius:12px; overflow:hidden;">
+
+    <!-- Cabeçalho com título e exportação -->
+    <div class="card-body d-flex justify-content-between align-items-center bg-warning" style="border-radius:0;">
+      <h4 class="fw-bold mb-0 text-dark">Empréstimos em andamento</h4>
+
+      <!-- Dropdown Exportar -->
+      <div class="dropdown">
+        <button class="btn btn-sm btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Exportar
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+          <li>
+            <a class="dropdown-item" href="{% url 'export_emprestimos' %}?format=csv">
+              <i class="bi bi-file-earmark-text me-2"></i> Exportar CSV
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{% url 'export_emprestimos' %}?format=xlsx">
+              <i class="bi bi-file-earmark-excel me-2"></i> Exportar Excel
+            </a>
+          </li>
+        </ul>
       </div>
     </div>
 
     <!-- Tabela -->
-    <div class="card-body">
-      <table class="table table-hover table-bordered align-middle text-center">
-        <thead class="table-dark">
-          <tr>
-            <th>Material</th>
-            <th>Usuário</th>
-            <th>Quantidade</th>
-            <th>Data de devolução</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% now "Y-m-d" as hoje %}
-          {% for e in emprestimos %}
-          <tr>
-            <!-- Nome do material -->
-            <td>{{ e.material.nome }}</td>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table id="emprestimosTable" class="table table-striped table-hover mb-0 align-middle text-light-mode"
+               style="background-color: transparent; border-radius: 8px; overflow: hidden;">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Usuário</th>
+              <th>Quantidade</th>
+              <th>Data de devolução</th>
+              <th>Status</th>
+              <th class="text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% now "Y-m-d" as hoje %}
+            {% for e in emprestimos %}
+            <tr>
+              <td>{{ e.material.nome }}</td>
+              <td>{{ e.usuario.username }}</td>
+              <td>{{ e.quantidade }}</td>
 
-            <!-- Usuário -->
-            <td>{{ e.usuario.username }}</td>
-
-            <!-- Quantidade -->
-            <td>{{ e.quantidade }}</td>
-
-            <!-- Data de devolução -->
-            <td>
-              {% if e.data_devolucao %}
-                {% if e.data_devolucao|stringformat:'s' < hoje %}
-                  <strong style="color:#FF3333;">{{ e.data_devolucao|date:"d/m/Y" }}</strong>
+              <!-- Data de devolução -->
+              <td>
+                {% if e.data_devolucao %}
+                  {% if e.data_devolucao|stringformat:'s' < hoje %}
+                    <strong style="color:#FF3333;">{{ e.data_devolucao|date:"d/m/Y" }}</strong>
+                  {% else %}
+                    {{ e.data_devolucao|date:"d/m/Y" }}
+                  {% endif %}
                 {% else %}
-                  {{ e.data_devolucao|date:"d/m/Y" }}
+                  —
                 {% endif %}
-              {% else %}
-                —
-              {% endif %}
-            </td>
+              </td>
 
-          <!-- Status -->
-          <td style="color: {{ e.status_color }};">{{ e.status_label }}</td>
+              <!-- Status -->
+              <td style="color: {{ e.status_color }};">{{ e.status_display }}</td>
 
-            <!-- Ações -->
-            <td>
-              <div class="d-flex justify-content-center gap-2">
-                <!-- Botão para marcar como concluído -->
-                <form method="post" action="{% url 'concluir_emprestimo' e.id %}" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-success btn-sm" title="Marcar como concluído">✓</button>
-                </form>
-
-                <!-- Botão para deletar -->
-                <form method="post" action="{% url 'deletar_emprestimo' e.id %}" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-danger btn-sm" title="Excluir">✕</button>
-                </form>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="6" class="text-muted text-center">Nenhum empréstimo em andamento.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+              <!-- Ações -->
+              <td class="text-center">
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                  <form method="post" action="{% url 'concluir_emprestimo' e.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-sm">Concluído</button>
+                  </form>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm btn-open-delete"
+                    data-id="{{ e.id }}"
+                    data-name="{{ e.material.nome }}"
+                    data-url-template="{% url 'deletar_emprestimo' 0 %}">
+                    Excluir
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-3 text-light">Nenhum empréstimo em andamento.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- Modal de confirmação -->
+<div class="modal" id="deleteModal" tabindex="-1" role="dialog" aria-hidden="true" style="display:none;">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form id="deleteForm" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalTitle">Confirmar exclusão</h5>
+          <button type="button" class="close btn-close-modal" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p id="deleteModalBody">Tem certeza que deseja excluir este empréstimo?</p>
+          <div>
+            <label for="id_motivo">Motivo (opcional)</label><br>
+            <textarea id="id_motivo" name="motivo" rows="4" cols="50" placeholder="Descreva um motivo..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-close-modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Confirmar exclusão</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Adapta o texto ao modo claro/escuro */
+  .text-light-mode th,
+  .text-light-mode td {
+    color: var(--bs-body-color, #f8f9fa);
+  }
+
+  @media (prefers-color-scheme: light) {
+    .text-light-mode th,
+    .text-light-mode td {
+      color: #212529;
+    }
+  }
+
+  /* Ajuste dos botões na coluna Ações */
+  .table td .btn {
+    min-width: 90px;
+  }
+
+  /* Dropdown dark */
+  .dropdown-menu {
+    font-size: 0.9rem;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const modal = document.getElementById('deleteModal');
+  const form = document.getElementById('deleteForm');
+  const title = document.getElementById('deleteModalTitle');
+  const body = document.getElementById('deleteModalBody');
+  const closeButtons = document.querySelectorAll('.btn-close-modal');
+
+  function showModal() { modal.style.display = 'block'; }
+  function hideModal() { modal.style.display = 'none'; }
+
+  document.querySelectorAll('.btn-open-delete').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      const id = this.dataset.id;
+      const name = this.dataset.name;
+      const urlTemplate = this.dataset.urlTemplate;
+      const action = urlTemplate.replace('/0/', '/' + id + '/');
+      form.action = action;
+      title.textContent = 'Excluir empréstimo: ' + name;
+      body.textContent = 'Tem certeza que deseja excluir o empréstimo de "' + name + '"?';
+      form.querySelector('textarea[name="motivo"]').value = '';
+      showModal();
+    });
+  });
+
+  closeButtons.forEach(function(b){ b.addEventListener('click', hideModal); });
+  modal.addEventListener('click', function(e){ if (e.target === modal) hideModal(); });
+});
+</script>
 
 {% endblock %}

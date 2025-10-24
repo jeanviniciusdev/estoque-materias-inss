@@ -1,10 +1,12 @@
 from django.db import models
 from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 
 class Material(models.Model):
     nome = models.CharField(max_length=200)
     descricao = models.TextField(blank=True)
+    imagem = models.ImageField(upload_to='materiais/', null=True, blank=True)
     quantidade = models.IntegerField(default=0)
     minimo = models.IntegerField(default=0)
     criado = models.DateTimeField(auto_now_add=True)
@@ -78,15 +80,28 @@ class Movimento(models.Model):
                 self.material.save()
             super().delete(*args, **kwargs)
 
-        @property
-        def status_display(self):
-            if self.tipo == 'DEVOLVIDO':
-                return 'Devolvido'
-            if self.tipo == 'EMPRESTIMO':
-                if self.data_devolucao:
-                    if self.data_devolucao < timezone.now().date():
-                        return 'Atrasado'
-                    else:
-                        return 'Pendente'
-                return 'Sem data'
-            return '-'
+    @property
+    def status_display(self):
+        if self.tipo == 'DEVOLVIDO':
+            return 'Concluído'
+        if self.tipo == 'EMPRESTIMO':
+            if self.data_devolucao:
+                if self.data_devolucao < timezone.now().date():
+                    return 'Atrasado'
+                else:
+                    return 'Em andamento'
+            return 'Sem data'
+        return '-'
+
+    @property
+    def status_color(self):
+        if self.tipo == 'DEVOLVIDO':
+            return '#28a745'  # verde
+        if self.tipo == 'EMPRESTIMO':
+            if self.data_devolucao:
+                if self.data_devolucao < timezone.now().date():
+                    return '#FF3333'  # vermelho
+                else:
+                    return '#ffc107'  # amarelo
+            return '#6c757d'  # cinza
+        return '#adb5bd'  # cinza claro

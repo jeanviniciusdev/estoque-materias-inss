@@ -9,7 +9,39 @@
       <div class="card-body" style="height:350px; padding-bottom:40px;">
         <h4 class="fw-bold mb-3 text-light">📦 Estoque por material</h4>
         <div style="position: relative; height:100%; width:100%;">
-          <canvas id="estoqueChart"></canvas>
+          <!-- Substitui o gráfico por uma tabela com scroll que lista materiais -->
+          <div id="estoqueTableContainer" style="height:90%; width:100%; display:flex; flex-direction:column;">
+            <div style="flex:1 1 auto; overflow:auto;">
+              <table id="estoqueTable" class="table mb-0" style="background-color: transparent; border-radius: 8px;">
+                <thead>
+                  <tr>
+                    <th class="text-light">Id</th>
+                    <th class="text-light">Nome</th>
+                    <th class="text-light">Quantidade</th>
+                    <th class="text-light">Quantidade ideal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for m in materiais %}
+                  <tr>
+                    <td>{{ forloop.counter }}.</td>
+                    <td>
+                      {% if m.imagem %}
+                        <a href="#" class="material-name" data-img-url="{{ m.imagem.url }}">{{ m.nome }}</a>
+                      {% else %}
+                        {{ m.nome }}
+                      {% endif %}
+                    </td>
+                    <td>{{ m.quantidade }}</td>
+                    <td>{{ m.minimo }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="4" class="text-center text-muted">Nenhum material encontrado.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -20,7 +52,7 @@
     <!-- Atalhos -->
     <div class="card shadow-sm mb-3">
       <div class="card-body">
-        <h5 class="fw-bold mb-3 text-light">↗️️ Atalhos</h5>
+  <h5 class="fw-bold mb-3 text-light">↗️️ Atalhos</h5>
         <a class="btn btn-success w-100 mb-2" href="{% url 'materials_add' %}">Adicionar material</a>
         <a class="btn btn-primary w-100 mb-2" href="{% url 'movimento_add' %}">Registrar movimento</a>
         <a class="btn btn-danger w-100 mb-2" href="{% url 'materials_list' %}">Editar materiais</a>
@@ -55,7 +87,7 @@
                 Materiais abaixo do mínimo
               </button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="alertaDropdown">
-                <li><a class="dropdown-item alerta-option" href="#" data-type="alertas">Materiais abaixo do mínimo</a></li>
+                <li><a class="dropdown-item alerta-option" href="#" data-type="alertas">Materiais abaixo do ideal</a></li>
                 <li><a class="dropdown-item alerta-option" href="#" data-type="emprestimos">Empréstimos em andamento</a></li>
               </ul>
             </div>
@@ -145,235 +177,287 @@ async function loadData() {
     return isNaN(parsed) ? 0 : parsed;
   });
 
-  // === GRÁFICO 1: Estoque por Material ===
-  const ctx1 = document.getElementById('estoqueChart').getContext('2d');
-  new Chart(ctx1, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Quantidade',
-        data: estoqueValues,
-        backgroundColor: '#1C64AE',
-        borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: { bottom: 20 } },
-      scales: {
-        x: { ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-        y: { beginAtZero: true, ticks: { color: '#FFFFFF' }, grid: { color: 'rgba(255,255,255,0.1)' } }
-      },
-      plugins: { legend: { position: 'top', labels: { color: '#FFFFFF' } } }
+  // Helper: map theme -> colors
+  function getThemeColors() {
+    const currentTheme = document.body.getAttribute('data-theme') || 'escuro';
+    let textColor = '#FFFFFF';
+    let tooltipBg = '#001D40';
+    let gridColor = 'rgba(255,255,255,0.1)';
+    if (currentTheme === 'claro') {
+      textColor = '#000000';
+      tooltipBg = '#ffffff';
+      gridColor = 'rgba(0,0,0,0.12)';
     }
-  });
+    return { currentTheme, textColor, tooltipBg, gridColor };
+  }
 
-  // === GRÁFICO 2: Comparativo ===
-  const ctx2 = document.getElementById('comparativoChart').getContext('2d');
+  // Populate scrollable table with materials
+  function populateTable(items) {
+    const tbody = document.querySelector('#estoqueTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!items || items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum material encontrado.</td></tr>';
+      return;
+    }
 
-  new Chart(ctx2, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Mínimo',
-          data: minimoValues,
-          backgroundColor: '#C0392B',
-          borderRadius: 6
-        },
-        {
-          label: 'Estoque Atual',
-          data: estoqueValues,
-          backgroundColor: '#1C64AE',
-          borderRadius: 6
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: { bottom: 20 } },
-      scales: {
-        x: {
-          ticks: { color: '#FFFFFF' },
-          grid: { color: 'rgba(255,255,255,0.1)' }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: { color: '#FFFFFF' },
-          grid: { color: 'rgba(255,255,255,0.1)' }
-        }
+    // Create rows
+    items.forEach((item, idx) => {
+      const tr = document.createElement('tr');
+      const tdIdx = document.createElement('td'); tdIdx.textContent = String(idx + 1) + '.';
+      const tdName = document.createElement('td');
+      // If the API provides an image URL, render a clickable anchor that will open the preview modal
+      if (item.imagem_url) {
+        const a = document.createElement('a');
+        a.href = '#';
+        a.className = 'material-name';
+        a.setAttribute('data-img-url', item.imagem_url);
+        a.textContent = item.nome;
+        tdName.appendChild(a);
+      } else {
+        tdName.textContent = item.nome;
+      }
+      const tdQty = document.createElement('td'); tdQty.textContent = item.quantidade;
+  const tdMin = document.createElement('td'); tdMin.textContent = item.minimo;
+      tr.appendChild(tdIdx); tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdMin);
+      tbody.appendChild(tr);
+    });
+
+    // Apply theme colors to header and cells
+    const { textColor } = getThemeColors();
+    document.querySelectorAll('#estoqueTable thead th').forEach(th => th.style.color = textColor);
+    document.querySelectorAll('#estoqueTable tbody td').forEach(td => td.style.color = textColor);
+  }
+
+  // Chart 2 only (comparativo)
+  let chart2 = null;
+  function createChart2(items) {
+    const { textColor, tooltipBg, gridColor } = getThemeColors();
+    if (chart2) { chart2.destroy(); chart2 = null; }
+    const ctx2 = document.getElementById('comparativoChart').getContext('2d');
+    chart2 = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: items.map(d => d.nome),
+        datasets: [
+          { label: 'Quantidade ideal', data: items.map(d => d.minimo), backgroundColor: '#C0392B', borderRadius: 6 },
+          { label: 'Estoque Atual', data: items.map(d => d.quantidade), backgroundColor: '#1C64AE', borderRadius: 6 }
+        ]
       },
-      plugins: {
-        legend: { position: 'top', labels: { color: '#FFFFFF' } },
-        tooltip: {
-          enabled: true,
-          backgroundColor: '#001D40',
-          titleColor: '#FFFFFF',
-          bodyColor: '#FFFFFF',
-          callbacks: {
-            label: function(ctx) {
-              const v = ctx.parsed.y;
-              return ctx.dataset.label + ': ' + (Number.isInteger(v) ? v : v.toFixed(2));
-            }
-          }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { bottom: 20 } },
+        scales: {
+          x: { ticks: { color: textColor }, grid: { color: gridColor } },
+          y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor } }
+        },
+        plugins: {
+          legend: { position: 'top', labels: { color: textColor } },
+          tooltip: { enabled: true, backgroundColor: tooltipBg, titleColor: textColor, bodyColor: textColor }
         }
       }
-    }
+    });
+  }
+
+  // initial populate and chart create
+  populateTable(data);
+  createChart2(data);
+
+  // update when theme changes
+  document.addEventListener('themeChanged', () => {
+    populateTable(data);
+    createChart2(data);
   });
 }
 
 loadData();
 </script>
 
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const btnAlertas = document.getElementById('btn-alertas');
+    const btnEmprest = document.getElementById('btn-emprestimos');
+    const tabelaAlertas = document.getElementById('tabela-alertas');
+    const tabelaEmprest = document.getElementById('tabela-emprestimos');
+    const nomeItems = document.querySelectorAll('.nome-item');
+    const rowsAlertas = document.querySelectorAll('#tabela-alertas tbody tr');
 
+    function showAlertas() {
+      tabelaAlertas.style.display = '';
+      tabelaEmprest.style.display = 'none';
+      btnAlertas.classList.add('active');
+      btnEmprest.classList.remove('active');
+    }
+    function showEmprestimos() {
+      tabelaAlertas.style.display = 'none';
+      tabelaEmprest.style.display = '';
+      btnAlertas.classList.remove('active');
+      btnEmprest.classList.add('active');
+    }
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const btnAlertas = document.getElementById('btn-alertas');
-      const btnEmprest = document.getElementById('btn-emprestimos');
-      const tabelaAlertas = document.getElementById('tabela-alertas');
-      const tabelaEmprest = document.getElementById('tabela-emprestimos');
-      const nomeItems = document.querySelectorAll('.nome-item');
-      const rowsAlertas = document.querySelectorAll('#tabela-alertas tbody tr');
+    btnAlertas.addEventListener('click', showAlertas);
+    btnEmprest.addEventListener('click', showEmprestimos);
 
-      function showAlertas() {
-        tabelaAlertas.style.display = '';
-        tabelaEmprest.style.display = 'none';
-        btnAlertas.classList.add('active');
-        btnEmprest.classList.remove('active');
-      }
-      function showEmprestimos() {
-        tabelaAlertas.style.display = 'none';
-        tabelaEmprest.style.display = '';
-        btnAlertas.classList.remove('active');
-        btnEmprest.classList.add('active');
-      }
-
-      btnAlertas.addEventListener('click', showAlertas);
-      btnEmprest.addEventListener('click', showEmprestimos);
-
-      // clicar no nome na lista filtra a tabela (alertas) para mostrar só o material escolhido
-      nomeItems.forEach(btn => {
-        btn.addEventListener('click', function () {
-          const type = this.dataset.type;
-          const id = this.dataset.id;
-          // se clicar em alerta, mostrará a tabela de alertas filtrada
-          if (type === 'alerta') {
-            showAlertas();
-            rowsAlertas.forEach(r => {
-              if (r.dataset.materialId === id) {
-                r.style.display = '';
-                r.classList.add('table-primary');
-              } else {
-                r.style.display = 'none';
-                r.classList.remove('table-primary');
-              }
-            });
-          } else if (type === 'emprestimo') {
-            showEmprestimos();
-            // opcional: destacar o empréstimo na tabela de empréstimos se existir
-            document.querySelectorAll('#tabela-emprestimos tbody tr').forEach(tr => {
-              tr.style.display = (tr.dataset.emprestimoId === id) ? '' : '';
-            });
-          }
-        });
+    nomeItems.forEach(btn => {
+      btn.addEventListener('click', function () {
+        const type = this.dataset.type;
+        const id = this.dataset.id;
+        if (type === 'alerta') {
+          showAlertas();
+          rowsAlertas.forEach(r => {
+            if (r.dataset.materialId === id) {
+              r.style.display = '';
+              r.classList.add('table-primary');
+            } else {
+              r.style.display = 'none';
+              r.classList.remove('table-primary');
+            }
+          });
+        } else if (type === 'emprestimo') {
+          showEmprestimos();
+          document.querySelectorAll('#tabela-emprestimos tbody tr').forEach(tr => {
+            tr.style.display = (tr.dataset.emprestimoId === id) ? '' : '';
+          });
+        }
       });
-
-      // permitir clicar no link do nome dentro da tabela para focar/filter
-      document.querySelectorAll('.filtrar-material').forEach(a => {
-        a.addEventListener('click', function (e) {
-          e.preventDefault();
-          const id = this.dataset.id;
-          // simula click no correspondente da lista
-          const item = document.querySelector('.nome-item[data-type="alerta"][data-id="' + id + '"]');
-          if (item) item.click();
-        });
-      });
-
     });
-    </script>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const options = document.querySelectorAll('.alerta-option');
-      const miniAlertas = document.getElementById('mini-alertas');
-      const miniEmprest = document.getElementById('mini-emprestimos');
-      const verTodos = document.getElementById('ver-todos-link');
-      const dropdownBtn = document.getElementById('alertaDropdown');
-
-      function showAlertas() {
-        miniAlertas.style.display = '';
-        miniEmprest.style.display = 'none';
-        dropdownBtn.textContent = 'Materiais abaixo do mínimo';
-        verTodos.href = "{% url 'alertas_completos' %}";
-      }
-      function showEmprestimos() {
-        miniAlertas.style.display = 'none';
-        miniEmprest.style.display = '';
-        dropdownBtn.textContent = 'Empréstimos em andamento';
-        verTodos.href = "{% url 'emprestimos_list' %}";
-      }
-
-      options.forEach(opt => {
-        opt.addEventListener('click', function (e) {
-          e.preventDefault();
-          const t = this.dataset.type;
-          if (t === 'alertas') showAlertas();
-          else if (t === 'emprestimos') showEmprestimos();
-        });
+    document.querySelectorAll('.filtrar-material').forEach(a => {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        const id = this.dataset.id;
+        const item = document.querySelector('.nome-item[data-type="alerta"][data-id="' + id + '"]');
+        if (item) item.click();
       });
-
-      // estado inicial: materiais (padrão)
-      showAlertas();
     });
-    </script>
+  });
+</script>
 
-    <style>
-      /* destaque e bordas arredondadas do dropdown/btn */
-      .alerta-dropdown .btn {
-        border-radius: 12px;
-        font-weight: 700;
-      }
-      .alerta-dropdown .dropdown-menu {
-        border-radius: 10px;
-        min-width: 220px;
-      }
-      /* padrão para mini-tables do resumo */
-      .mini-table thead th { font-weight:700; color:#000; }
-      .mini-table td, .mini-table th { vertical-align: middle; }
-      .card-alerts .card-body.bg-warning { border-radius:12px 12px 0 0; }
-    </style>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const options = document.querySelectorAll('.alerta-option');
+    const miniAlertas = document.getElementById('mini-alertas');
+    const miniEmprest = document.getElementById('mini-emprestimos');
+    const verTodos = document.getElementById('ver-todos-link');
+    const dropdownBtn = document.getElementById('alertaDropdown');
 
-    <style>
-      /* Força cabeçalhos visíveis para ambos os tipos (mini + full) dentro do card de Alertas */
-      .card-alerts .table-full-alertas thead,
-      .card-alerts .table-full-alertas thead th {
-        background-color: #0B3D91 !important; /* laranja escuro */
-        color: #fff !important;
-      }
+    function showAlertas() {
+      miniAlertas.style.display = '';
+      miniEmprest.style.display = 'none';
+      dropdownBtn.textContent = 'Materiais abaixo do ideal';
+      verTodos.href = "{% url 'alertas_completos' %}";
+    }
+    function showEmprestimos() {
+      miniAlertas.style.display = 'none';
+      miniEmprest.style.display = '';
+      dropdownBtn.textContent = 'Empréstimos em andamento';
+      verTodos.href = "{% url 'emprestimos_list' %}";
+    }
 
-      .card-alerts .table-full-emprestimos thead,
-      .card-alerts .table-full-emprestimos thead th {
-        background-color: #0B3D91 !important; /* azul escuro */
-        color: #fff !important;
-      }
+    options.forEach(opt => {
+      opt.addEventListener('click', function (e) {
+        e.preventDefault();
+        const t = this.dataset.type;
+        if (t === 'alertas') showAlertas();
+        else if (t === 'emprestimos') showEmprestimos();
+      });
+    });
 
-      /* Prioriza o cabeçalho definido acima sobre regras genéricas do Bootstrap/temas */
-      .card-alerts table thead th {
-        color: #fff !important;
-        font-weight: 700;
-      }
+    showAlertas();
+  });
+</script>
 
-      /* Cancela regras anteriores conflitantes */
-      .mini-table.tabela-alertas thead th,
-      .mini-table.tabela-emprestimos thead th {
-        color: #fff !important;
-        font-weight: 700;
+<style>
+  .alerta-dropdown .btn {
+    border-radius: 12px;
+    font-weight: 700;
+  }
+  .alerta-dropdown .dropdown-menu {
+    border-radius: 10px;
+    min-width: 220px;
+  }
+  .mini-table thead th { font-weight:700; color:#000; }
+  .mini-table td, .mini-table th { vertical-align: middle; }
+  .card-alerts .card-body.bg-warning { border-radius:12px 12px 0 0; }
+
+  .card-alerts .table-full-alertas thead,
+  .card-alerts .table-full-alertas thead th {
+    background-color: #0B3D91 !important;
+    color: #fff !important;
+  }
+
+  .card-alerts .table-full-emprestimos thead,
+  .card-alerts .table-full-emprestimos thead th {
+    background-color: #0B3D91 !important;
+    color: #fff !important;
+  }
+
+  .card-alerts table thead th {
+    color: #fff !important;
+    font-weight: 700;
+  }
+
+  .mini-table.tabela-alertas thead th,
+  .mini-table.tabela-emprestimos thead th {
+    color: #fff !important;
+    font-weight: 700;
+  }
+
+  /* Estilos do modal de imagem */
+  .img-modal-overlay {
+    position: fixed; inset: 0; display: none;
+    background: rgba(0,0,0,0.65);
+    justify-content: center; align-items: center; z-index: 1200;
+  }
+  .img-modal-content {
+    position: relative; max-width: 96vw; max-height: 92vh;
+    display: flex; justify-content: center; align-items: center;
+  }
+  .img-modal-img {
+    max-width: 100%; max-height: 100%;
+    object-fit: contain; border-radius: 8px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+  }
+  .img-modal-close {
+    position: absolute; top: -10px; right: -10px;
+    background: #fff; border-radius: 50%;
+    width: 36px; height: 36px; border: none;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  }
+</style>
+
+<!-- Modal de imagem -->
+<div id="imgModalDashboard" class="img-modal-overlay" style="display:none;">
+  <div class="img-modal-content">
+    <button type="button" class="img-modal-close" aria-label="Fechar">×</button>
+    <img id="imgModalDashboardImg" src="" alt="Preview" class="img-modal-img">
+  </div>
+</div>
+
+<script>
+  document.addEventListener('click', function(e){
+    const a = e.target.closest && e.target.closest('.material-name');
+    if (a){
+      e.preventDefault();
+      const url = a.dataset.imgUrl;
+      if (!url) return;
+      const modal = document.getElementById('imgModalDashboard');
+      const img = document.getElementById('imgModalDashboardImg');
+      const close = modal.querySelector('.img-modal-close');
+      img.src = url;
+      modal.style.display = 'flex';
+      document.body.style.overflow='hidden';
+      function hide(){
+        modal.style.display='none';
+        img.src='';
+        document.body.style.overflow='';
       }
-    </style>
+      close.onclick = hide;
+      modal.onclick = (ev)=>{ if(ev.target===modal) hide(); };
+    }
+  });
+</script>
+
 
 {% endblock %}
