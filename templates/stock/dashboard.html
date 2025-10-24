@@ -59,34 +59,94 @@
       </div>
     </div>
 
-<!-- Alertas -->
-<div class="card shadow-sm" style="max-height:350px; overflow-y:auto;">
-  <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-  <strong>⚠️ Materiais abaixo da quantidade ideal</strong>
-    <a href="{% url 'alertas_completos' %}" class="btn btn-sm btn-outline-dark">Ver todos</a>
-  </div>
-  <ul class="list-group list-group-flush">
-    {% if materiais_em_alerta %}
-      {% for mat in materiais_em_alerta|slice:":2" %}  {# Mostra apenas os 2 primeiros #}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        {{ mat.nome }}
-  <span class="badge bg-danger rounded-pill">{{ mat.quantidade }}/{{ mat.minimo }}</span>
-      </li>
-      {% endfor %}
-    {% else %}
-      <li class="list-group-item text-center text-muted">
-  Nenhum material abaixo da Quantidade ideal.
-      </li>
-    {% endif %}
-  </ul>
-</div>
+    <!-- Alertas (substitui bloco anterior) -->
+    {% now "Y-m-d" as hoje %}
 
-  </div>
-</div>
+    <style>
+      /* forçar cabeçalho preto com texto branco nas mini-tables */
+      .mini-table thead { background:#000 !important; color:#fff !important; }
+      .mini-table thead th { color:#fff !important; }
+      /* tornar dropdown mais destacado e arredondado */
+      .alerta-dropdown .btn { border-radius: 12px; font-weight:700; }
+      .alerta-dropdown .dropdown-menu { border-radius: 10px; min-width: 220px; }
+      /* alinhar título e controle na mesma linha verticalmente */
+      .card-alerts .card-body.bg-warning { border-radius:12px 12px 0 0; }
+      .card-alerts .card-header-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+    </style>
 
-<!-- Gráfico 2: Comparativo de Estoques -->
+    <div class="card shadow-sm mb-3 card-alerts" style="border-radius:12px; overflow:hidden;">
+      <div class="card-body bg-warning">
+        <div class="card-header-row">
+          <div>
+            <h5 class="fw-bold mb-0 text-dark" style="line-height:1.1;">Alertas</h5>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <div class="dropdown alerta-dropdown">
+              <button class="btn btn-warning btn-sm dropdown-toggle text-dark" type="button" id="alertaDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Materiais abaixo do mínimo
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="alertaDropdown">
+                <li><a class="dropdown-item alerta-option" href="#" data-type="alertas">Materiais abaixo do ideal</a></li>
+                <li><a class="dropdown-item alerta-option" href="#" data-type="emprestimos">Empréstimos em andamento</a></li>
+              </ul>
+            </div>
+
+            <a id="ver-todos-link" href="{% url 'alertas_completos' %}" class="btn btn-sm btn-outline-dark">Ver todos</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div id="mini-alertas">
+          <table class="table table-sm table-hover table-bordered mb-0 table-full-alertas">
+            <thead>
+              <tr><th>Nome</th><th>Quantidade</th><th>Mínimo</th></tr>
+            </thead>
+            <tbody>
+              {% for m in alertas_top|slice:":1" %}
+              <tr>
+                <td><a href="{% url 'materials_list' %}?filter={{ m.id }}" class="text-dark">{{ m.nome }}</a></td>
+                <td>{{ m.quantidade }}</td>
+                <td>{{ m.minimo }}</td>
+              </tr>
+              {% endfor %}
+              {% if alertas_top|length == 0 %}
+              <tr><td colspan="3" class="text-center text-muted">Nenhum material abaixo do mínimo</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <div id="mini-emprestimos" style="display:none;">
+          <table class="table table-sm table-hover table-bordered mb-0 table-full-emprestimos">
+            <thead>
+              <tr><th>Material</th><th>Usuário</th><th>Qtd</th><th>Devolução</th></tr>
+            </thead>
+            <tbody>
+              {% for e in emprestimos_soon|slice:":1" %}
+              <tr class="{% if e.data_devolucao and e.data_devolucao|stringformat:'s' < hoje %}table-danger{% endif %}">
+                <td>{% if e.material %}{{ e.material.nome }}{% else %}{{ e.nota|default:"—" }}{% endif %}</td>
+                <td>{% if e.usuario %}{{ e.usuario.username }}{% endif %}</td>
+                <td>{{ e.quantidade }}</td>
+                <td>{% if e.data_devolucao %}{{ e.data_devolucao|date:"d/m/Y" }}{% endif %}</td>
+              </tr>
+              {% endfor %}
+              {% if emprestimos_soon|length == 0 %}
+              <tr><td colspan="4" class="text-center text-muted">Nenhum empréstimo em andamento</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+</div> <!-- Fecha a coluna lateral -->
+</div> <!-- Fecha a row g-3 -->
+
+<!-- Gráfico 2: Comparativo de Estoques (em tela cheia) -->
 <div class="card shadow-sm mb-3 mt-3">
-  <div class="card-body" style="height:350px; padding-bottom:40px;">
+  <div class="card-body" style="height:420px; padding-bottom:40px;">
     <h4 class="fw-bold mb-3 text-light">📈 Comparativo de Estoques</h4>
     <div style="position: relative; height:100%; width:100%;">
       <canvas id="comparativoChart"></canvas>
@@ -103,7 +163,19 @@ async function loadData() {
   const data = await resp.json();
 
   const labels = data.map(d => d.nome);
-  const values = data.map(d => d.quantidade);
+
+  // === Converte valores e trata nulos ===
+  const estoqueValues = data.map(d => {
+    const val = (d.quantidade ?? 0);
+    const parsed = Number(String(val).replace(',', '.'));
+    return isNaN(parsed) ? 0 : parsed;
+  });
+
+  const minimoValues = data.map(d => {
+    const val = (d.minimo ?? 0);
+    const parsed = Number(String(val).replace(',', '.'));
+    return isNaN(parsed) ? 0 : parsed;
+  });
 
   // Helper: map theme -> colors
   function getThemeColors() {
@@ -202,7 +274,160 @@ async function loadData() {
 loadData();
 </script>
 
-<!-- Image preview modal (centered) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const btnAlertas = document.getElementById('btn-alertas');
+    const btnEmprest = document.getElementById('btn-emprestimos');
+    const tabelaAlertas = document.getElementById('tabela-alertas');
+    const tabelaEmprest = document.getElementById('tabela-emprestimos');
+    const nomeItems = document.querySelectorAll('.nome-item');
+    const rowsAlertas = document.querySelectorAll('#tabela-alertas tbody tr');
+
+    function showAlertas() {
+      tabelaAlertas.style.display = '';
+      tabelaEmprest.style.display = 'none';
+      btnAlertas.classList.add('active');
+      btnEmprest.classList.remove('active');
+    }
+    function showEmprestimos() {
+      tabelaAlertas.style.display = 'none';
+      tabelaEmprest.style.display = '';
+      btnAlertas.classList.remove('active');
+      btnEmprest.classList.add('active');
+    }
+
+    btnAlertas.addEventListener('click', showAlertas);
+    btnEmprest.addEventListener('click', showEmprestimos);
+
+    nomeItems.forEach(btn => {
+      btn.addEventListener('click', function () {
+        const type = this.dataset.type;
+        const id = this.dataset.id;
+        if (type === 'alerta') {
+          showAlertas();
+          rowsAlertas.forEach(r => {
+            if (r.dataset.materialId === id) {
+              r.style.display = '';
+              r.classList.add('table-primary');
+            } else {
+              r.style.display = 'none';
+              r.classList.remove('table-primary');
+            }
+          });
+        } else if (type === 'emprestimo') {
+          showEmprestimos();
+          document.querySelectorAll('#tabela-emprestimos tbody tr').forEach(tr => {
+            tr.style.display = (tr.dataset.emprestimoId === id) ? '' : '';
+          });
+        }
+      });
+    });
+
+    document.querySelectorAll('.filtrar-material').forEach(a => {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        const id = this.dataset.id;
+        const item = document.querySelector('.nome-item[data-type="alerta"][data-id="' + id + '"]');
+        if (item) item.click();
+      });
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const options = document.querySelectorAll('.alerta-option');
+    const miniAlertas = document.getElementById('mini-alertas');
+    const miniEmprest = document.getElementById('mini-emprestimos');
+    const verTodos = document.getElementById('ver-todos-link');
+    const dropdownBtn = document.getElementById('alertaDropdown');
+
+    function showAlertas() {
+      miniAlertas.style.display = '';
+      miniEmprest.style.display = 'none';
+      dropdownBtn.textContent = 'Materiais abaixo do ideal';
+      verTodos.href = "{% url 'alertas_completos' %}";
+    }
+    function showEmprestimos() {
+      miniAlertas.style.display = 'none';
+      miniEmprest.style.display = '';
+      dropdownBtn.textContent = 'Empréstimos em andamento';
+      verTodos.href = "{% url 'emprestimos_list' %}";
+    }
+
+    options.forEach(opt => {
+      opt.addEventListener('click', function (e) {
+        e.preventDefault();
+        const t = this.dataset.type;
+        if (t === 'alertas') showAlertas();
+        else if (t === 'emprestimos') showEmprestimos();
+      });
+    });
+
+    showAlertas();
+  });
+</script>
+
+<style>
+  .alerta-dropdown .btn {
+    border-radius: 12px;
+    font-weight: 700;
+  }
+  .alerta-dropdown .dropdown-menu {
+    border-radius: 10px;
+    min-width: 220px;
+  }
+  .mini-table thead th { font-weight:700; color:#000; }
+  .mini-table td, .mini-table th { vertical-align: middle; }
+  .card-alerts .card-body.bg-warning { border-radius:12px 12px 0 0; }
+
+  .card-alerts .table-full-alertas thead,
+  .card-alerts .table-full-alertas thead th {
+    background-color: #0B3D91 !important;
+    color: #fff !important;
+  }
+
+  .card-alerts .table-full-emprestimos thead,
+  .card-alerts .table-full-emprestimos thead th {
+    background-color: #0B3D91 !important;
+    color: #fff !important;
+  }
+
+  .card-alerts table thead th {
+    color: #fff !important;
+    font-weight: 700;
+  }
+
+  .mini-table.tabela-alertas thead th,
+  .mini-table.tabela-emprestimos thead th {
+    color: #fff !important;
+    font-weight: 700;
+  }
+
+  /* Estilos do modal de imagem */
+  .img-modal-overlay {
+    position: fixed; inset: 0; display: none;
+    background: rgba(0,0,0,0.65);
+    justify-content: center; align-items: center; z-index: 1200;
+  }
+  .img-modal-content {
+    position: relative; max-width: 96vw; max-height: 92vh;
+    display: flex; justify-content: center; align-items: center;
+  }
+  .img-modal-img {
+    max-width: 100%; max-height: 100%;
+    object-fit: contain; border-radius: 8px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+  }
+  .img-modal-close {
+    position: absolute; top: -10px; right: -10px;
+    background: #fff; border-radius: 50%;
+    width: 36px; height: 36px; border: none;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  }
+</style>
+
+<!-- Modal de imagem -->
 <div id="imgModalDashboard" class="img-modal-overlay" style="display:none;">
   <div class="img-modal-content">
     <button type="button" class="img-modal-close" aria-label="Fechar">×</button>
@@ -210,28 +435,29 @@ loadData();
   </div>
 </div>
 
-<style>
-  .img-modal-overlay{position:fixed;inset:0;display:none;background:rgba(0,0,0,0.65);justify-content:center;align-items:center;z-index:1200}
-  .img-modal-content{position:relative;max-width:96vw;max-height:92vh;display:flex;justify-content:center;align-items:center}
-  .img-modal-img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,0.6)}
-  .img-modal-close{position:absolute;top:-10px;right:-10px;background:#fff;border-radius:50%;width:36px;height:36px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.25)}
-</style>
-
 <script>
-document.addEventListener('click', function(e){
-  const a = e.target.closest && e.target.closest('.material-name');
-  if (a){
-    e.preventDefault();
-    const url = a.dataset.imgUrl;
-    if (!url) return;
-    const modal = document.getElementById('imgModalDashboard');
-    const img = document.getElementById('imgModalDashboardImg');
-    const close = modal.querySelector('.img-modal-close');
-    img.src = url; modal.style.display = 'flex'; document.body.style.overflow='hidden';
-    function hide(){ modal.style.display='none'; img.src=''; document.body.style.overflow=''; }
-    close.onclick = hide; modal.onclick = (ev)=>{ if(ev.target===modal) hide(); };
-  }
-});
+  document.addEventListener('click', function(e){
+    const a = e.target.closest && e.target.closest('.material-name');
+    if (a){
+      e.preventDefault();
+      const url = a.dataset.imgUrl;
+      if (!url) return;
+      const modal = document.getElementById('imgModalDashboard');
+      const img = document.getElementById('imgModalDashboardImg');
+      const close = modal.querySelector('.img-modal-close');
+      img.src = url;
+      modal.style.display = 'flex';
+      document.body.style.overflow='hidden';
+      function hide(){
+        modal.style.display='none';
+        img.src='';
+        document.body.style.overflow='';
+      }
+      close.onclick = hide;
+      modal.onclick = (ev)=>{ if(ev.target===modal) hide(); };
+    }
+  });
 </script>
+
 
 {% endblock %}

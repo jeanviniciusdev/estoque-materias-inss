@@ -2,7 +2,7 @@
 {% block content %}
 <style>
   .form-container {
-    /* reduce vertical stretching for edit forms so card height matches content */
+    /* reduz altura vertical para formulários de edição */
     min-height: auto;
     display: flex;
     justify-content: center;
@@ -17,10 +17,11 @@
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
     padding: 1.2rem 1.5rem;
     width: 100%;
-    max-width: 380px;
+    max-width: 420px;
     text-align: center;
     animation: fadeIn 0.6s ease-in-out;
     transition: background-color 0.3s, color 0.3s;
+    min-height: 480px; /* da D-Branch, mantém altura equilibrada */
   }
 
   .form-card h4 {
@@ -34,6 +35,7 @@
     font-size: 0.95rem;
     margin-bottom: 0.25rem;
     color: var(--text-color);
+    font-weight: 600;
   }
 
   /* Inputs */
@@ -44,7 +46,7 @@
     color: #000;
     border: 1px solid #2f4c7b;
     border-radius: 6px;
-    padding: 0.4rem 0.5rem;
+    padding: 0.45rem 0.5rem;
     width: 100%;
     margin-bottom: 0.7rem;
     transition: all 0.3s ease;
@@ -99,12 +101,11 @@
         {{ form.descricao }}
       </div>
       <div style="display:flex; gap:0.5rem; align-items:flex-start;">
-            <div style="flex:1">{{ form.quantidade.label_tag }}{{ form.quantidade }}</div>
-            <div style="width:160px; min-width:120px;">{{ form.minimo.label_tag }}{{ form.minimo }}</div>
-          </div>
+        <div style="flex:1">{{ form.quantidade.label_tag }}{{ form.quantidade }}</div>
+        <div style="width:160px; min-width:120px;">{{ form.minimo.label_tag }}{{ form.minimo }}</div>
+      </div>
       <div style="text-align:left; margin-top:0.75rem;">
         {{ form.imagem.label_tag }}<br>
-        {# Render a simple file input to avoid Django's default 'Currently: <path>' output which increases card height #}
         <input type="file" name="imagem" id="{{ form.imagem.id_for_label }}" accept="image/*">
       </div>
 
@@ -115,7 +116,7 @@
       </div>
       {% endif %}
 
-      <div style="margin-top:0.9rem">{{ form.non_field_errors }} </div>
+      <div style="margin-top:0.9rem">{{ form.non_field_errors }}</div>
       <button type="submit">Salvar</button>
     </form>
   </div>
