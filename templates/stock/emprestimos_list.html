@@ -148,6 +148,16 @@
   .dropdown-menu {
     font-size: 0.9rem;
   }
+
+  /* Garante contraste do texto vazio dentro da tabela em qualquer tema */
+  .text-light-mode .text-light {
+    color: inherit !important;
+  }
+
+  /* Força preto no texto da linha de vazio (colspan=6) em /emprestimos */
+  #emprestimosTable tbody td[colspan="6"] {
+    color: #000 !important;
+  }
 </style>
 
 <script>
