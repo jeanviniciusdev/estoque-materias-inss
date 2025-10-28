@@ -105,3 +105,18 @@ class Movimento(models.Model):
                     return '#ffc107'  # amarelo
             return '#6c757d'  # cinza
         return '#adb5bd'  # cinza claro
+
+    @property
+    def status_badge_class(self):
+        # Classes de badge Bootstrap para melhor visibilidade
+        if self.tipo == 'DEVOLVIDO':
+            return 'bg-success'
+        if self.tipo == 'EMPRESTIMO':
+            if self.data_devolucao:
+                if self.data_devolucao < timezone.now().date():
+                    return 'bg-danger'
+                else:
+                    # Amarelo com texto escuro para melhor contraste
+                    return 'bg-warning text-dark'
+            return 'bg-secondary'
+        return 'bg-secondary'

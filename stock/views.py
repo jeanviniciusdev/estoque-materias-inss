@@ -376,16 +376,8 @@ def export_alertas_csv(request):
 def emprestimos_list(request):
     emprestimos = Movimento.objects.filter(tipo__in=['EMPRESTIMO', 'DEVOLVIDO']).select_related('material', 'usuario').order_by('data_devolucao')
 
-    for e in emprestimos:
-        if e.tipo == 'DEVOLVIDO':
-            e.status_display = '✅ Concluído'
-            e.status_color = 'green'
-        elif e.data_devolucao and e.data_devolucao < timezone.now().date():
-            e.status_display = '⚠️ Atrasado'
-            e.status_color = 'red'
-        else:
-            e.status_display = '⏳ Em andamento'
-            e.status_color = 'orange'
+    # status_display e status_color são propriedades no modelo
+    # Não atribuímos valores aqui para evitar erro de propriedade somente leitura
 
     return render(request, 'stock/emprestimos_list.html', {'emprestimos': emprestimos})
 
@@ -427,14 +419,7 @@ def export_emprestimos(request):
     fmt = (request.GET.get('format') or 'csv').lower()
     qs = Movimento.objects.filter(tipo__in=['EMPRESTIMO', 'DEVOLVIDO']).select_related('material', 'usuario').order_by('data_devolucao')
 
-    # garante que cada movimento tenha status calculado
-    for e in qs:
-        if e.tipo == 'DEVOLVIDO':
-            e.status_display = '✅ Concluído'
-        elif e.data_devolucao and e.data_devolucao < timezone.now().date():
-            e.status_display = '⚠️ Atrasado'
-        else:
-            e.status_display = '⏳ Em andamento'
+    # status_display já é calculado pela propriedade do modelo
 
     # --- XLSX ---
     if fmt == 'xlsx':
