@@ -65,7 +65,9 @@
               </td>
 
               <!-- Status -->
-              <td style="color: {{ e.status_color }};">{{ e.status_display }}</td>
+              <td>
+                <span class="badge rounded-pill {{ e.status_badge_class }}">{{ e.status_display }}</span>
+              </td>
 
               <!-- Ações -->
               <td class="text-center">
